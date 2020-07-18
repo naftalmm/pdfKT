@@ -19,6 +19,7 @@ class JPDFsList(private val owner: Frame) : JPanel() {
 
     fun removePDFDocument(doc: JPDFDocumentListItem) {
         edt {
+            doc.dispose()
             remove(doc)
             validate()
             repaint()

@@ -9,10 +9,10 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocument) : JDialog(owner, pdf.
     init {
         layout = FlowLayout()
 
-        add(JImage(pdf.currentTitleImage).fit(800), BorderLayout.CENTER)
+        add(JImage(pdf.currentTitleImage.fit(800)), BorderLayout.CENTER)
         val p = JPanel(FlowLayout())
         for ((pageIndex, rotation) in pdf.getCurrentState().pages) {
-            val image = JImage(pdf.images[pageIndex]).fit(200)
+            val image = JImage(pdf.imagesThumbnails[pageIndex])
             p.add(if (rotation != Rotation.NORTH) image.rotate(rotation.angle.toDouble()) else image)
         }
         add(p, BorderLayout.SOUTH)

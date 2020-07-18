@@ -18,22 +18,11 @@ internal class JImage(private val img: Image) : JPanel() {
     init {
         layout = null
 
-        val size = Dimension(img.getWidth(null), img.getHeight(null))
+        val size = Dimension(img.getWidth(), img.getHeight())
         preferredSize = size
         minimumSize = size
         maximumSize = size
         setSize(size)
-    }
-
-    fun fit(maxSize: Int): JImage {
-        return if (width > maxSize || height > maxSize) {
-            JImage(
-                when {
-                    (width > height) -> img.getScaledInstance(maxSize, -1, SCALE_SMOOTH)
-                    else -> img.getScaledInstance(-1, maxSize, SCALE_SMOOTH)
-                }
-            )
-        } else this
     }
 
     fun rotate(angle: Double): JImage {
@@ -53,15 +42,29 @@ internal class JImage(private val img: Image) : JPanel() {
     }
 }
 
+fun Image.getWidth() = getWidth(null)
+fun Image.getHeight() = getHeight(null)
+
 fun Image.toBufferedImage(): BufferedImage {
     if (this is BufferedImage) {
         return this
     }
-    val bufferedImage = BufferedImage(this.getWidth(null), this.getHeight(null), BufferedImage.TYPE_INT_ARGB)
+    val bufferedImage = BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB)
 
     val graphics2D = bufferedImage.createGraphics()
     graphics2D.drawImage(this, 0, 0, null)
     graphics2D.dispose()
 
     return bufferedImage
+}
+
+fun Image.fit(maxSize: Int): Image {
+    val width = getWidth()
+    val height = getHeight()
+    return if (width > maxSize || height > maxSize) {
+        when {
+            (width > height) -> getScaledInstance(maxSize, -1, SCALE_SMOOTH)
+            else -> getScaledInstance(-1, maxSize, SCALE_SMOOTH)
+        }
+    } else this
 }

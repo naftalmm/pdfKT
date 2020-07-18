@@ -1,3 +1,7 @@
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.icepdf.core.exceptions.PDFException
 import org.icepdf.core.exceptions.PDFSecurityException
 import org.icepdf.core.pobjects.Document
@@ -9,6 +13,9 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.*
 import kotlin.collections.LinkedHashMap
+import kotlin.streams.toList
+
+const val IMAGES_THUMBNAILS_SIZE = 200
 
 enum class Rotation(val angle: Int) {
     NORTH(0), EAST(90), SOUTH(180), WEST(270)
@@ -20,16 +27,16 @@ class PDFDocument(file: File) {
     val fileName: String = file.nameWithoutExtension
 
     private val document = Document()
+
     var currentTitleImage: Image
-    val images: List<Image> by lazy {
-        val result = (0 until document.numberOfPages)
-            .map { document.getPageImage(it, GraphicsRenderingHints.PRINT, Page.BOUNDARY_CROPBOX, 0f, 1f) }
+    private val pageImagesThumbnailsLoadingJob: Job
+    var imagesThumbnails: List<Image> = emptyList()
+        get() = runBlocking {
+            pageImagesThumbnailsLoadingJob.join()
+            field
+        }
+        private set
 
-        // clean up resources
-        document.dispose()
-
-        result
-    }
     private val statesStack: LinkedList<DocumentState>
 
     init {
@@ -45,12 +52,25 @@ class PDFDocument(file: File) {
             println("Error IOException $ex")
         }
 
+        pageImagesThumbnailsLoadingJob = initPageImagesLoadingJob()
         currentTitleImage = initTitleImage()
         statesStack = initStatesStack()
     }
 
+    private fun initPageImagesLoadingJob(): Job = GlobalScope.launch {
+        imagesThumbnails = (0 until document.numberOfPages).toList().parallelStream()
+            .map { document.getPageImage(it, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f) }
+            .map { it.fit(IMAGES_THUMBNAILS_SIZE) }
+            .toList()
+
+        // clean up resources
+        document.dispose()
+    }
+
+    fun cancelPageImagesLoadingJob() = pageImagesThumbnailsLoadingJob.cancel()
+
     private fun initTitleImage() =
-        document.getPageImage(0, GraphicsRenderingHints.PRINT, Page.BOUNDARY_CROPBOX, 0f, 1f)
+        document.getPageImage(0, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f)
 
     fun removePages(indexes: Set<Int>) {
         val prevState = statesStack.last()
@@ -88,7 +108,7 @@ class PDFDocument(file: File) {
             }
         }
 
-        currentTitleImage = images[newTitlePageIndex] //TODO rotate
+        currentTitleImage = imagesThumbnails[newTitlePageIndex] //TODO rotate
     }
 
     private fun initStatesStack(): LinkedList<DocumentState> = LinkedList<DocumentState>()

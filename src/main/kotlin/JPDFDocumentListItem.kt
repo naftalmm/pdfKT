@@ -10,7 +10,7 @@ class JPDFDocumentListItem(private val pdf: PDFDocument, private val pdfsList: J
     init {
         layout = FlowLayout(FlowLayout.LEFT)
 
-        add(JImage(pdf.currentTitleImage).fit(THUMBNAIL_SIZE))
+        add(JImage(pdf.currentTitleImage.fit(THUMBNAIL_SIZE)))
         add(JLabel(pdf.fileName))
         add(JButton("Edit").also { it.addActionListener { createAndShowEditDialog() } })
         add(JButton("Delete").also { it.addActionListener { pdfsList.removePDFDocument(this)} })
@@ -24,5 +24,9 @@ class JPDFDocumentListItem(private val pdf: PDFDocument, private val pdfsList: J
         edt {
             JPDFDocumentEditView(owner, pdf).isVisible = true
         }
+    }
+
+    fun dispose() {
+        pdf.cancelPageImagesLoadingJob()
     }
 }
