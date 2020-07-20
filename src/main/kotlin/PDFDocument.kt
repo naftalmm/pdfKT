@@ -1,7 +1,4 @@
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.icepdf.core.exceptions.PDFException
 import org.icepdf.core.exceptions.PDFSecurityException
 import org.icepdf.core.pobjects.Document
@@ -13,7 +10,6 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.*
 import kotlin.collections.LinkedHashMap
-import kotlin.streams.toList
 
 const val IMAGES_THUMBNAILS_SIZE = 200
 
@@ -58,19 +54,23 @@ class PDFDocument(file: File) {
     }
 
     private fun initPageImagesLoadingJob(): Job = GlobalScope.launch {
-        imagesThumbnails = (0 until document.numberOfPages).toList().parallelStream()
-            .map { document.getPageImage(it, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f) }
-            .map { it.fit(IMAGES_THUMBNAILS_SIZE) }
-            .toList()
+        val jobs = (0 until document.numberOfPages).map {
+            async(Dispatchers.Default) {
+                readPage(it, 1f).fit(IMAGES_THUMBNAILS_SIZE)
+            }
+        }
+        imagesThumbnails = jobs.awaitAll()
 
         // clean up resources
         document.dispose()
     }
 
+    private fun readPage(page: Int, scale: Float): Image =
+        document.getPageImage(page, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, scale)
+
     fun cancelPageImagesLoadingJob() = pageImagesThumbnailsLoadingJob.cancel()
 
-    private fun initTitleImage() =
-        document.getPageImage(0, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f)
+    private fun initTitleImage() = readPage(0, 1f)
 
     fun removePages(indexes: Set<Int>) {
         val prevState = statesStack.last()
