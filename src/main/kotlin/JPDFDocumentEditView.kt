@@ -16,8 +16,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocument) : JDialog
     }
 
     private val scope = CoroutineScope(Dispatchers.Default)
-    private val thumbnailsStubs = HashMap<Int, JImage>()
-    private val p = JPanel(FlowLayout())
+    private val thumbnails = pdf.getCurrentState().pages.keys.associateWith { JImage(loadingImage) }
 
     init {
         layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
@@ -29,13 +28,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocument) : JDialog
 
         add(JImage(pdf.currentTitleImage.fit(600)))
         add(Box.createRigidArea(Dimension(0, 5)))
-
-        for ((pageIndex, _) in pdf.getCurrentState().pages) {
-            val stubImage = JImage(loadingImage)
-            thumbnailsStubs[pageIndex] = stubImage
-            p.add(stubImage)
-        }
-        add(JScrollPane(p))
+        add(JScrollPane(JPanel(FlowLayout()).also { panel -> thumbnails.values.forEach { panel.add(it) } }))
         loadPagesThumbnails(scope)
     }
 
@@ -43,7 +36,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocument) : JDialog
         for ((pageIndex, rotation) in pdf.getCurrentState().pages) {
             scope.launch {
                 val image = pdf.getPageThumbnail(pageIndex).rotate(rotation.angle.toDouble())
-                thumbnailsStubs[pageIndex]?.repaintWith(image)
+                thumbnails[pageIndex]?.repaintWith(image)
             }
         }
     }

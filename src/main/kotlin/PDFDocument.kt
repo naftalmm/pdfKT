@@ -2,6 +2,7 @@ import org.icepdf.core.exceptions.PDFException
 import org.icepdf.core.exceptions.PDFSecurityException
 import org.icepdf.core.pobjects.Document
 import org.icepdf.core.pobjects.Page
+import org.icepdf.core.pobjects.graphics.images.ImageUtility
 import org.icepdf.core.util.GraphicsRenderingHints
 import java.awt.Image
 import java.io.File
@@ -10,6 +11,7 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.LinkedHashMap
+import kotlin.math.min
 
 const val IMAGES_THUMBNAILS_SIZE = 200
 
@@ -91,6 +93,19 @@ class PDFDocument(file: File) {
         }
 
         currentTitleImage = getPageImage(newTitlePageIndex).rotate(newTitlePageRotation.angle.toDouble())
+    }
+
+    fun Document.getPageImage(pageIndex: Int, sizeToFit: Int): Image {
+        val page = catalog.pageTree.getPage(pageIndex).also { it.init() }
+        val pageDimension = page.getSize(Page.BOUNDARY_CROPBOX, 0f, 1f)
+        val w = pageDimension.width
+        val h = pageDimension.height
+        val scaleToFit = min(min(1.0, sizeToFit / w), sizeToFit / h)
+        val result = ImageUtility.createCompatibleImage((w * scaleToFit).toInt(), (h * scaleToFit).toInt())
+        val g = result.createGraphics()
+        page.paint(g, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, scaleToFit.toFloat())
+        g.dispose()
+        return result
     }
 
     private fun initStatesStack(): LinkedList<DocumentState> = LinkedList<DocumentState>()
