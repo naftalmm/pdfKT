@@ -10,35 +10,28 @@ import kotlin.math.floor
 import kotlin.math.sin
 
 
-internal class JImage(private val img: Image) : JPanel() {
+internal class JImage(private var img: Image) : JPanel() {
     override fun paintComponent(g: Graphics) {
         g.drawImage(img, 0, 0, null)
     }
 
+    fun repaintWith(img: Image) {
+        this.img = img
+        setSize()
+        repaint()
+    }
+
     init {
         layout = null
+        setSize()
+    }
 
+    private fun setSize() {
         val size = Dimension(img.getWidth(), img.getHeight())
         preferredSize = size
         minimumSize = size
         maximumSize = size
         setSize(size)
-    }
-
-    fun rotate(angle: Double): JImage {
-        val angleRad = Math.toRadians(angle)
-        val sin = abs(sin(angleRad))
-        val cos = abs(cos(angleRad))
-        val neww = floor(width * cos + height * sin).toInt()
-        val newh = floor(height * cos + width * sin).toInt()
-
-        val result = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-        val g = result.createGraphics()
-        g.translate((neww - width) / 2, (newh - height) / 2)
-        g.rotate(angleRad, width / 2.toDouble(), height / 2.toDouble())
-        g.drawRenderedImage(img.toBufferedImage(), null)
-        g.dispose()
-        return JImage(result)
     }
 }
 
@@ -67,4 +60,24 @@ fun Image.fit(maxSize: Int): Image {
             else -> getScaledInstance(-1, maxSize, SCALE_SMOOTH)
         }
     } else this
+}
+
+fun Image.rotate(angle: Double): Image {
+    if (angle == 0.0) return this
+    val width = getWidth()
+    val height = getHeight()
+
+    val angleRad = Math.toRadians(angle)
+    val sin = abs(sin(angleRad))
+    val cos = abs(cos(angleRad))
+    val neww = floor(width * cos + height * sin).toInt()
+    val newh = floor(height * cos + width * sin).toInt()
+
+    val result = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val g = result.createGraphics()
+    g.translate((neww - width) / 2, (newh - height) / 2)
+    g.rotate(angleRad, width / 2.toDouble(), height / 2.toDouble())
+    g.drawRenderedImage(toBufferedImage(), null)
+    g.dispose()
+    return result
 }

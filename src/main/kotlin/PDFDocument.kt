@@ -9,6 +9,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.LinkedHashMap
 
 const val IMAGES_THUMBNAILS_SIZE = 200
@@ -24,14 +25,10 @@ class PDFDocument(file: File) {
 
     private val document = Document()
 
-    var currentTitleImage: Image
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val pageImagesThumbnailsLoadingJob: Job
-    var imagesThumbnails: List<Image> = emptyList()
-        get() = runBlocking {
-            pageImagesThumbnailsLoadingJob.join()
-            field
-        }
-        private set
+    private val imagesThumbnails: MutableMap<Int, Image> = ConcurrentHashMap()
+    var currentTitleImage: Image
 
     private val statesStack: LinkedList<DocumentState>
 
@@ -53,24 +50,31 @@ class PDFDocument(file: File) {
         statesStack = initStatesStack()
     }
 
-    private fun initPageImagesLoadingJob(): Job = GlobalScope.launch {
+    private fun initPageImagesLoadingJob() = scope.launch {
         val jobs = (0 until document.numberOfPages).map {
-            async(Dispatchers.Default) {
-                readPage(it, 1f).fit(IMAGES_THUMBNAILS_SIZE)
+            scope.async {
+                getPageThumbnail(it)
             }
         }
-        imagesThumbnails = jobs.awaitAll()
-
+        jobs.awaitAll()
         // clean up resources
         document.dispose()
     }
 
-    private fun readPage(page: Int, scale: Float): Image =
-        document.getPageImage(page, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, scale)
+    fun thumbnailsAreReady() = !pageImagesThumbnailsLoadingJob.isActive
 
-    fun cancelPageImagesLoadingJob() = pageImagesThumbnailsLoadingJob.cancel()
+    fun cancelPageImagesLoadingJob() {
+        scope.coroutineContext.cancelChildren()
+        document.dispose()
+    }
 
-    private fun initTitleImage() = readPage(0, 1f)
+    fun getPageThumbnail(page: Int) =
+        imagesThumbnails.getOrPut(page) { getPageImage(page).fit(IMAGES_THUMBNAILS_SIZE) }
+
+    private fun getPageImage(page: Int): Image =
+        document.getPageImage(page, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f)
+
+    private fun initTitleImage() = getPageImage(0)
 
     fun removePages(indexes: Set<Int>) {
         val prevState = statesStack.last()
@@ -97,7 +101,7 @@ class PDFDocument(file: File) {
         }
     }
 
-    fun changeTitleImage(prevState: DocumentState, newState: DocumentState) {
+    private fun changeTitleImage(prevState: DocumentState, newState: DocumentState) {
         val prevTitlePageState = prevState.pages.first()
         val (newTitlePageIndex, newTitlePageRotation) = newState.pages.first() ?: return
 
@@ -108,7 +112,7 @@ class PDFDocument(file: File) {
             }
         }
 
-        currentTitleImage = imagesThumbnails[newTitlePageIndex] //TODO rotate
+        currentTitleImage = getPageImage(newTitlePageIndex).rotate(newTitlePageRotation.angle.toDouble())
     }
 
     private fun initStatesStack(): LinkedList<DocumentState> = LinkedList<DocumentState>()
