@@ -23,18 +23,12 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocument) : JDialog
 
         add(JImage(pdf.currentTitleImage.fit(600)))
         add(Box.createRigidArea(Dimension(0, 5)))
-        if (pdf.thumbnailsAreReady()) {
-            for ((pageIndex, rotation) in pdf.getCurrentState().pages) {
-                p.add(JImage(pdf.getPageThumbnail(pageIndex).rotate(rotation.angle.toDouble())))
-            }
-        } else {
-            for ((pageIndex, _) in pdf.getCurrentState().pages) {
-                val stubImage = JImage(loadingImage)
-                thumbnailsStubs[pageIndex] = stubImage
-                p.add(stubImage)
-            }
-        }
 
+        for ((pageIndex, _) in pdf.getCurrentState().pages) {
+            val stubImage = JImage(loadingImage)
+            thumbnailsStubs[pageIndex] = stubImage
+            p.add(stubImage)
+        }
         add(JScrollPane(p))
         GlobalScope.launch {
             loadPagesThumbnails()
@@ -46,7 +40,6 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocument) : JDialog
             launch {
                 val image = pdf.getPageThumbnail(pageIndex).rotate(rotation.angle.toDouble())
                 thumbnailsStubs[pageIndex]?.repaintWith(image)
-                println(pageIndex)
             }
         }
     }

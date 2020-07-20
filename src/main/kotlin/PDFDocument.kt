@@ -1,4 +1,3 @@
-import kotlinx.coroutines.*
 import org.icepdf.core.exceptions.PDFException
 import org.icepdf.core.exceptions.PDFSecurityException
 import org.icepdf.core.pobjects.Document
@@ -25,8 +24,6 @@ class PDFDocument(file: File) {
 
     private val document = Document()
 
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val pageImagesThumbnailsLoadingJob: Job
     private val imagesThumbnails: MutableMap<Int, Image> = ConcurrentHashMap()
     var currentTitleImage: Image
 
@@ -45,27 +42,8 @@ class PDFDocument(file: File) {
             println("Error IOException $ex")
         }
 
-        pageImagesThumbnailsLoadingJob = initPageImagesLoadingJob()
         currentTitleImage = initTitleImage()
         statesStack = initStatesStack()
-    }
-
-    private fun initPageImagesLoadingJob() = scope.launch {
-        val jobs = (0 until document.numberOfPages).map {
-            scope.async {
-                getPageThumbnail(it)
-            }
-        }
-        jobs.awaitAll()
-        // clean up resources
-        document.dispose()
-    }
-
-    fun thumbnailsAreReady() = !pageImagesThumbnailsLoadingJob.isActive
-
-    fun cancelPageImagesLoadingJob() {
-        scope.coroutineContext.cancelChildren()
-        document.dispose()
     }
 
     fun getPageThumbnail(page: Int) =

@@ -25,8 +25,4 @@ class JPDFDocumentListItem(private val pdf: PDFDocument, private val pdfsList: J
             JPDFDocumentEditView(owner, pdf).isVisible = true
         }
     }
-
-    fun dispose() {
-        pdf.cancelPageImagesLoadingJob()
-    }
 }
