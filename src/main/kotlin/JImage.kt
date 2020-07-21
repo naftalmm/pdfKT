@@ -9,16 +9,17 @@ import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.sin
 
-
-internal class JImage(private var img: Image) : JPanel() {
+class JImage(private var img: Image) : JPanel() {
     override fun paintComponent(g: Graphics) {
         g.drawImage(img, 0, 0, null)
     }
 
     fun repaintWith(img: Image) {
         this.img = img
-        setSize()
-        repaint()
+        edt {
+            setSize()
+            repaint()
+        }
     }
 
     init {
