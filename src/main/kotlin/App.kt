@@ -2,6 +2,7 @@ import java.awt.EventQueue
 import java.awt.datatransfer.DataFlavor
 import java.io.File
 import javax.swing.JFrame
+import javax.swing.JScrollPane
 import javax.swing.TransferHandler
 
 const val DEFAULT_WIDTH = 1000
@@ -17,7 +18,7 @@ class App(title: String) : JFrame() {
 
         setTitle(title)
         val pdfsList = JPDFsList(this)
-        add(pdfsList)
+        add(JScrollPane(pdfsList))
         transferHandler = object : TransferHandler() {
             override fun canImport(support: TransferSupport): Boolean =
                 support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
