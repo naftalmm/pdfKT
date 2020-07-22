@@ -2,6 +2,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.awt.Image
 import java.util.*
+import javax.imageio.ImageIO
 import kotlin.collections.LinkedHashMap
 
 enum class Rotation(val angle: Int) {
@@ -11,6 +12,12 @@ enum class Rotation(val angle: Int) {
 data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
 class PDFDocumentEditModel(val pdf: PDFDocument) {
+    companion object {
+        //TODO разобраться, почему gif не двигается
+        //TODO подрезать размер gif
+        private val loadingImage = ImageIO.read(PDFDocument::class.java.getResource("loading.gif"))
+    }
+
     private val statesStack: LinkedList<DocumentState>
     val fileName = pdf.fileName
     var currentTitleImageThumbnail: JImage
@@ -64,17 +71,19 @@ class PDFDocumentEditModel(val pdf: PDFDocument) {
     private fun initStatesStack() = LinkedList<DocumentState>()
         .also { it.push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
 
-    fun getCurrentState(): DocumentState = statesStack.peek()
+    private fun getCurrentState(): DocumentState = statesStack.peek()
     private fun getPageThumbnail(pageIndex: Int): Image = pdf.getPageThumbnail(pageIndex)
     fun getPageImage(pageIndex: Int): Image = pdf.getPageImage(pageIndex)
-    fun getCurrentTitleImage() = getCurrentState().pages.first()
+    fun getCurrentTitleImage() = getCurrentState().pages.first()!!
 
-    fun loadPagesThumbnails(pagesPreviews: Map<Int, JPDFDocumentEditView.JPagePreview>, scope: CoroutineScope) {
+    fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> {
+        val pagesPreviews = getCurrentState().pages.keys.associateWith { JImage(loadingImage) }
         for ((pageIndex, rotation) in getCurrentState().pages) {
             scope.launch {
                 val image = getPageThumbnail(pageIndex).rotate(rotation)
                 pagesPreviews[pageIndex]?.repaintWith(image)
             }
         }
+        return pagesPreviews
     }
 }

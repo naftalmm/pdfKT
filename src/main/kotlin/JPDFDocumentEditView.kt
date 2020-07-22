@@ -1,19 +1,15 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Frame
 import java.awt.event.*
-import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.border.Border
 
-class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
-    companion object {
-        //TODO разобраться, почему gif не двигается
-        //TODO подрезать размер gif
-        private val loadingImage = ImageIO.read(PDFDocument::class.java.getResource("loading.gif"))
-    }
-
+class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
     open class JSelectablePanel : JPanel() {
         companion object {
             private val blueBorder : Border = BorderFactory.createLineBorder(Color.BLUE)
@@ -86,9 +82,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         }
     }
 
-    class JPagePreview(pageIndex: Int, img: Image, selectionsManager: SelectionsManager) : JSelectablePanel() {
-        private val thumbnail = JImage(img)
-
+    class JPagePreview(pageIndex: Int, thumbnail: JImage, selectionsManager: SelectionsManager) : JSelectablePanel() {
         init {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(thumbnail)
@@ -121,17 +115,15 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 override fun mouseExited(e: MouseEvent) {}
             })
         }
-
-        internal fun repaintWith(image: Image) = this.thumbnail.repaintWith(image)
     }
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private var selectionsManager = SelectionsManager()
-    private val pagesPreviews =
-        pdf.getCurrentState().pages.keys.associateWith { JPagePreview(it, loadingImage, selectionsManager) }
+    private val pagesPreviews = pdf.getCurrentPagesThumbnails(scope)
+        .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager)}
 
     init {
-        selectionsManager.pagesOrder = pagesPreviews.values.toList()
+        selectionsManager.pagesOrder = pagesPreviews.toList()
 
         layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
         setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)
@@ -140,10 +132,9 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             override fun windowClosed(e: WindowEvent) = scope.coroutineContext.cancelChildren()
         })
 
-        val (currentTitleImageIndex, currentTitleImageRotation) = pdf.getCurrentTitleImage()!!
+        val (currentTitleImageIndex, currentTitleImageRotation) = pdf.getCurrentTitleImage()
         add(JImage(pdf.getPageImage(currentTitleImageIndex).fit(600).rotate(currentTitleImageRotation)))
         add(Box.createRigidArea(Dimension(0, 5)))
-        add(JScrollPane(JPanel(FlowLayout()).also { panel -> pagesPreviews.values.forEach { panel.add(it) } }))
-        pdf.loadPagesThumbnails(pagesPreviews, scope)
+        add(JScrollPane(JPanel(FlowLayout()).also { panel -> pagesPreviews.forEach { panel.add(it) } }))
     }
 }
