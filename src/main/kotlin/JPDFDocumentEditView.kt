@@ -12,14 +12,19 @@ import javax.swing.border.Border
 class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
     open class JSelectablePanel : JPanel() {
         companion object {
-            //TODO разобраться с прыгающими превтю из-за того, что border имеет ширину
-            private val blueBorder : Border = BorderFactory.createLineBorder(Color.BLUE)
+            private val blueBorder: Border = BorderFactory.createLineBorder(Color.BLUE)
+            private val emptyBorder: Border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
         }
+
+        init {
+            border = emptyBorder
+        }
+
         private var isSelected = false
             set(value) {
                 field = value
                 edt {
-                    border = if (value) blueBorder else BorderFactory.createEmptyBorder()
+                    border = if (value) blueBorder else emptyBorder
                 }
             }
 
@@ -121,7 +126,7 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(ow
     private val scope = CoroutineScope(Dispatchers.Default)
     private var selectionsManager = SelectionsManager()
     private val pagesPreviews = pdf.getCurrentPagesThumbnails(scope)
-        .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager)}
+        .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
 
     init {
         selectionsManager.pagesOrder = pagesPreviews.toList()
