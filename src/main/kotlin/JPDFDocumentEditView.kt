@@ -12,6 +12,7 @@ import javax.swing.border.Border
 class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
     open class JSelectablePanel : JPanel() {
         companion object {
+            //TODO разобраться с прыгающими превтю из-за того, что border имеет ширину
             private val blueBorder : Border = BorderFactory.createLineBorder(Color.BLUE)
         }
         private var isSelected = false

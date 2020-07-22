@@ -76,14 +76,10 @@ class PDFDocumentEditModel(val pdf: PDFDocument) {
     fun getPageImage(pageIndex: Int): Image = pdf.getPageImage(pageIndex)
     fun getCurrentTitleImage() = getCurrentState().pages.first()!!
 
-    fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> {
-        val pagesPreviews = getCurrentState().pages.keys.associateWith { JImage(loadingImage) }
-        for ((pageIndex, rotation) in getCurrentState().pages) {
-            scope.launch {
-                val image = getPageThumbnail(pageIndex).rotate(rotation)
-                pagesPreviews[pageIndex]?.repaintWith(image)
-            }
-        }
-        return pagesPreviews
-    }
+    fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> =
+        getCurrentState().pages.map { (pageIndex, rotation) ->
+            val pagePreview = JImage(loadingImage)
+            scope.launch { pagePreview.repaintWith(getPageThumbnail(pageIndex).rotate(rotation)) }
+            pageIndex to pagePreview
+        }.toMap()
 }
