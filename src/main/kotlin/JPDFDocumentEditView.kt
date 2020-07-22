@@ -1,20 +1,24 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.launch
 import java.awt.*
 import java.awt.event.*
 import javax.imageio.ImageIO
 import javax.swing.*
+import javax.swing.border.Border
 
-class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocument) : JDialog(owner, pdf.fileName) {
+class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
     companion object {
+        //TODO разобраться, почему gif не двигается
+        //TODO подрезать размер gif
         private val loadingImage = ImageIO.read(PDFDocument::class.java.getResource("loading.gif"))
     }
 
     open class JSelectablePanel : JPanel() {
-        val blueBorder = BorderFactory.createLineBorder(Color.BLUE)
-        var isSelected = false
+        companion object {
+            private val blueBorder : Border = BorderFactory.createLineBorder(Color.BLUE)
+        }
+        private var isSelected = false
             set(value) {
                 field = value
                 edt {
@@ -136,18 +140,10 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocument) : JDialog
             override fun windowClosed(e: WindowEvent) = scope.coroutineContext.cancelChildren()
         })
 
-        add(JImage(pdf.currentTitleImage.fit(600)))
+        val (currentTitleImageIndex, currentTitleImageRotation) = pdf.getCurrentTitleImage()!!
+        add(JImage(pdf.getPageImage(currentTitleImageIndex).fit(600).rotate(currentTitleImageRotation)))
         add(Box.createRigidArea(Dimension(0, 5)))
         add(JScrollPane(JPanel(FlowLayout()).also { panel -> pagesPreviews.values.forEach { panel.add(it) } }))
-        loadPagesThumbnails(scope)
-    }
-
-    private fun loadPagesThumbnails(scope: CoroutineScope) {
-        for ((pageIndex, rotation) in pdf.getCurrentState().pages) {
-            scope.launch {
-                val image = pdf.getPageThumbnail(pageIndex).rotate(rotation.angle.toDouble())
-                pagesPreviews[pageIndex]?.repaintWith(image)
-            }
-        }
+        pdf.loadPagesThumbnails(pagesPreviews, scope)
     }
 }

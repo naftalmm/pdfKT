@@ -63,6 +63,8 @@ fun Image.fit(maxSize: Int): Image {
     } else this
 }
 
+fun Image.rotate(rotation: Rotation) = rotate(rotation.angle.toDouble())
+
 fun Image.rotate(angle: Double): Image {
     if (angle == 0.0) return this
     val width = getWidth()

@@ -4,13 +4,12 @@ import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class JPDFDocumentListItem(private val pdf: PDFDocument, private val pdfsList: JPDFsList, private val owner: Frame) : JPanel() {
-    private val THUMBNAIL_SIZE = 50
+class JPDFDocumentListItem(private val pdf: PDFDocumentEditModel, private val pdfsList: JPDFsList, private val owner: Frame) : JPanel() {
 
     init {
         layout = FlowLayout(FlowLayout.LEFT)
 
-        add(JImage(pdf.currentTitleImage.fit(THUMBNAIL_SIZE)))
+        add(pdf.currentTitleImageThumbnail)
         add(JLabel(pdf.fileName))
         add(JButton("Edit").also { it.addActionListener { createAndShowEditDialog() } })
         add(JButton("Delete").also { it.addActionListener { pdfsList.removePDFDocument(this)} })
