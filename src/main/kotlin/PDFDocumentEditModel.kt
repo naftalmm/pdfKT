@@ -11,7 +11,7 @@ enum class Rotation(val angle: Int) {
 
 data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
-class PDFDocumentEditModel(val pdf: PDFDocument) {
+class PDFDocumentEditModel(private val pdf: PDFDocument) {
     companion object {
         //TODO разобраться, почему gif не двигается
         //TODO подрезать размер gif
@@ -26,6 +26,9 @@ class PDFDocumentEditModel(val pdf: PDFDocument) {
         statesStack = initStatesStack()
         currentTitleImageThumbnail = initTitleImage()
     }
+
+    private fun initStatesStack() = LinkedList<DocumentState>()
+        .also { it.push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
 
     private fun initTitleImage() = JImage(pdf.getPageImage(0).fit(50))
 
@@ -55,28 +58,21 @@ class PDFDocumentEditModel(val pdf: PDFDocument) {
     }
 
     private fun changeTitleImageThumbnail(prevState: DocumentState, newState: DocumentState) {
-        val prevTitlePageState = prevState.pages.first()
-        val (newTitlePageIndex, newTitlePageRotation) = newState.pages.first() ?: return
-
-        if (prevTitlePageState != null) {
-            val (prevTitlePageIndex, prevTitlePageRotation) = prevTitlePageState
-            if (prevTitlePageIndex == newTitlePageIndex && prevTitlePageRotation == newTitlePageRotation) {
-                return
-            }
+        val (prevTitlePageIndex, prevTitlePageRotation) = prevState.pages.asIterable().first()
+        val (newTitlePageIndex, newTitlePageRotation) = newState.pages.asIterable().first()
+        if (prevTitlePageIndex == newTitlePageIndex && prevTitlePageRotation == newTitlePageRotation) {
+            return
         }
 
         currentTitleImageThumbnail.repaintWith(pdf.getPageImage(newTitlePageIndex).fit(50).rotate(newTitlePageRotation))
     }
 
-    private fun initStatesStack() = LinkedList<DocumentState>()
-        .also { it.push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
-
-    private fun getCurrentState(): DocumentState = statesStack.peek()
-
     fun getCurrentTitleImage(): Image {
-        val (currentTitleImageIndex, currentTitleImageRotation) = getCurrentState().pages.first()!!
+        val (currentTitleImageIndex, currentTitleImageRotation) = getCurrentState().pages.asIterable().first()
         return pdf.getPageImage(currentTitleImageIndex).rotate(currentTitleImageRotation)
     }
+
+    private fun getCurrentState(): DocumentState = statesStack.peek()
 
     fun getCurrentPageImage(pageIndex: Int): Image = pdf.getPageImage(pageIndex).rotate(getCurrentPageRotation(pageIndex))
 

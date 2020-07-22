@@ -40,8 +40,3 @@ class PDFDocument(file: File) {
     fun getPageImage(page: Int): Image =
         document.getPageImage(page, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f)
 }
-
-fun <K, V> LinkedHashMap<K, V>.first(): Map.Entry<K, V>? {
-    val iterator = this.iterator()
-    return if (iterator.hasNext()) iterator.next() else null
-}

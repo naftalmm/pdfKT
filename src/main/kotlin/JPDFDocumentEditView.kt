@@ -1,10 +1,7 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.FlowLayout
-import java.awt.Frame
+import java.awt.*
 import java.awt.event.*
 import javax.swing.*
 import javax.swing.border.Border
