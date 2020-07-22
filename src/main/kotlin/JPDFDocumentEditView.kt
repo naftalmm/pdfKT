@@ -9,7 +9,7 @@ import java.awt.event.*
 import javax.swing.*
 import javax.swing.border.Border
 
-class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
+class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
     open class JSelectablePanel : JPanel() {
         companion object {
             private val blueBorder: Border = BorderFactory.createLineBorder(Color.BLUE)
@@ -42,9 +42,13 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(ow
         }
     }
 
-    class SelectionsManager {
-        lateinit var pagesOrder: List<JSelectablePanel>
-        var latestSelectedPageIndex = 0
+    class SelectionsManager(private val jpdfDocumentEditView: JPDFDocumentEditView) {
+        lateinit var pagesOrder: List<JPagePreview>
+        private var latestSelectedPageIndexInPagesOrderList = 0
+            set(value) {
+                jpdfDocumentEditView.repaintCurrentPageImageViewWith(pagesOrder[value].pageIndex)
+                field = value
+            }
         val selectedPages = LinkedHashSet<JSelectablePanel>()
 
         fun toggleSelection(item: JSelectablePanel) {
@@ -53,7 +57,8 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(ow
             } else {
                 selectedPages.remove(item)
             }
-            latestSelectedPageIndex = pagesOrder.indexOf(selectedPages.last())
+            latestSelectedPageIndexInPagesOrderList =
+                if (selectedPages.isNotEmpty()) pagesOrder.indexOf(selectedPages.last()) else 0
         }
 
         fun setSelection(item: JSelectablePanel) {
@@ -73,8 +78,8 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(ow
             }
 
             val itemIndex = pagesOrder.indexOf(item)
-            selectRange(latestSelectedPageIndex, itemIndex)
-            latestSelectedPageIndex = itemIndex
+            selectRange(latestSelectedPageIndexInPagesOrderList, itemIndex)
+            latestSelectedPageIndexInPagesOrderList = itemIndex
         }
 
         private fun selectRange(fromIndexInclusive: Int, toIndexInclusive: Int) {
@@ -88,7 +93,8 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(ow
         }
     }
 
-    class JPagePreview(pageIndex: Int, thumbnail: JImage, selectionsManager: SelectionsManager) : JSelectablePanel() {
+    class JPagePreview(val pageIndex: Int, thumbnail: JImage, selectionsManager: SelectionsManager) :
+        JSelectablePanel() {
         init {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(thumbnail)
@@ -124,7 +130,9 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(ow
     }
 
     private val scope = CoroutineScope(Dispatchers.Default)
-    private var selectionsManager = SelectionsManager()
+    private val currentImageMaxDimension = 800
+    private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension))
+    private var selectionsManager = SelectionsManager(this)
     private val pagesPreviews = pdf.getCurrentPagesThumbnails(scope)
         .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
 
@@ -138,9 +146,11 @@ class JPDFDocumentEditView(owner: Frame, pdf: PDFDocumentEditModel) : JDialog(ow
             override fun windowClosed(e: WindowEvent) = scope.coroutineContext.cancelChildren()
         })
 
-        val (currentTitleImageIndex, currentTitleImageRotation) = pdf.getCurrentTitleImage()
-        add(JImage(pdf.getPageImage(currentTitleImageIndex).fit(600).rotate(currentTitleImageRotation)))
+        add(currentPageImageView)
         add(Box.createRigidArea(Dimension(0, 5)))
         add(JScrollPane(JPanel(FlowLayout()).also { panel -> pagesPreviews.forEach { panel.add(it) } }))
     }
+
+    fun repaintCurrentPageImageViewWith(pageIndex: Int) =
+        currentPageImageView.repaintWith(pdf.getCurrentPageImage(pageIndex).fit(currentImageMaxDimension))
 }

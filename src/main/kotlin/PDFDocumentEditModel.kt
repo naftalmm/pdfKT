@@ -72,9 +72,15 @@ class PDFDocumentEditModel(val pdf: PDFDocument) {
         .also { it.push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
 
     private fun getCurrentState(): DocumentState = statesStack.peek()
-    private fun getPageThumbnail(pageIndex: Int): Image = pdf.getPageThumbnail(pageIndex)
-    fun getPageImage(pageIndex: Int): Image = pdf.getPageImage(pageIndex)
-    fun getCurrentTitleImage() = getCurrentState().pages.first()!!
+
+    fun getCurrentTitleImage(): Image {
+        val (currentTitleImageIndex, currentTitleImageRotation) = getCurrentState().pages.first()!!
+        return pdf.getPageImage(currentTitleImageIndex).rotate(currentTitleImageRotation)
+    }
+
+    fun getCurrentPageImage(pageIndex: Int): Image = pdf.getPageImage(pageIndex).rotate(getCurrentPageRotation(pageIndex))
+
+    private fun getCurrentPageRotation(pageIndex: Int): Rotation = getCurrentState().pages[pageIndex] ?: Rotation.NORTH
 
     fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> =
         getCurrentState().pages.map { (pageIndex, rotation) ->
@@ -82,4 +88,6 @@ class PDFDocumentEditModel(val pdf: PDFDocument) {
             scope.launch { pagePreview.repaintWith(getPageThumbnail(pageIndex).rotate(rotation)) }
             pageIndex to pagePreview
         }.toMap()
+
+    private fun getPageThumbnail(pageIndex: Int): Image = pdf.getPageThumbnail(pageIndex)
 }
