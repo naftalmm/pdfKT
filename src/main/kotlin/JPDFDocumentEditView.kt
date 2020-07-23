@@ -6,7 +6,7 @@ import java.awt.event.*
 import javax.swing.*
 import javax.swing.border.Border
 
-class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName) {
+class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName), Observer {
     open class JSelectablePanel : JPanel() {
         companion object {
             private val blueBorder: Border = BorderFactory.createLineBorder(Color.BLUE)
@@ -39,13 +39,17 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         }
     }
 
-    class SelectionsManager(private val jpdfDocumentEditView: JPDFDocumentEditView) {
+    class SelectionsManager : SelectedPageObservable {
+        override val subscribers: MutableList<Observer> = ArrayList()
         lateinit var pagesOrder: List<JPagePreview>
         private var latestSelectedPageIndexInPagesOrderList = 0
             set(value) {
-                jpdfDocumentEditView.repaintCurrentPageImageViewWith(pagesOrder[value].pageIndex)
                 field = value
+                notifySubscribers()
             }
+
+        override fun getLatestSelectedPageIndex(): Int = pagesOrder[latestSelectedPageIndexInPagesOrderList].pageIndex
+
         val selectedPages = LinkedHashSet<JSelectablePanel>()
 
         fun toggleSelection(item: JSelectablePanel) {
@@ -129,7 +133,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val currentImageMaxDimension = 800
     private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension))
-    private var selectionsManager = SelectionsManager(this)
+    private var selectionsManager = SelectionsManager().also { it.addObserver(this) }
     private val pagesPreviews = pdf.getCurrentPagesThumbnails(scope)
         .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
 
@@ -137,7 +141,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         selectionsManager.pagesOrder = pagesPreviews.toList()
 
         layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
-        setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+        setSize(DEFAULT_WIDTH, getScreenHeightWithoutTaskBar())
         defaultCloseOperation = DISPOSE_ON_CLOSE
         addWindowListener(object : WindowAdapter() {
             override fun windowClosed(e: WindowEvent) = scope.coroutineContext.cancelChildren()
@@ -148,6 +152,16 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         add(JScrollPane(JPanel(FlowLayout()).apply { addAll(pagesPreviews) }))
     }
 
-    fun repaintCurrentPageImageViewWith(pageIndex: Int) =
+    private fun getScreenHeightWithoutTaskBar(): Int {
+        val screenSize: Dimension = Toolkit.getDefaultToolkit().screenSize
+        val taskBarHeight = Toolkit.getDefaultToolkit().getScreenInsets(graphicsConfiguration).bottom
+        return screenSize.height - taskBarHeight
+    }
+
+    override fun update(event: ObservableEvent) = when(event) {
+        is PageSelected -> repaintCurrentPageImageViewWith(event.pageIndex)
+    }
+
+    private fun repaintCurrentPageImageViewWith(pageIndex: Int) =
         currentPageImageView.repaintWith(pdf.getCurrentPageImage(pageIndex).fit(currentImageMaxDimension))
 }
