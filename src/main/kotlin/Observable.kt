@@ -1,9 +1,14 @@
 interface Observer {
     fun update(event: ObservableEvent)
+
+    fun subscribeTo(vararg observables: Observable<*>) {
+        observables.forEach { it.addObserver(this) }
+    }
 }
 
 sealed class ObservableEvent
 data class PageSelected(val pageIndex: Int) : ObservableEvent()
+object ThumbnailLoaded : ObservableEvent()
 
 interface Observable<T : ObservableEvent> {
     val subscribers: MutableList<Observer>

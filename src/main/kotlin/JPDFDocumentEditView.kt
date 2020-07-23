@@ -6,7 +6,8 @@ import java.awt.event.*
 import javax.swing.*
 import javax.swing.border.Border
 
-class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName), Observer {
+class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName),
+    Observer {
     open class JSelectablePanel : JPanel() {
         companion object {
             private val blueBorder: Border = BorderFactory.createLineBorder(Color.BLUE)
@@ -133,15 +134,17 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val currentImageMaxDimension = 800
     private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension))
-    private var selectionsManager = SelectionsManager().also { it.addObserver(this) }
+    private var selectionsManager = SelectionsManager()
     private val pagesPreviews = pdf.getCurrentPagesThumbnails(scope)
         .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
+    private val pagesPreviewsPanel = JPanel(FlowLayout()).apply { addAll(pagesPreviews) }
 
     init {
         selectionsManager.pagesOrder = pagesPreviews.toList()
 
         layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
         setSize(DEFAULT_WIDTH, getScreenHeightWithoutTaskBar())
+        setLocationRelativeTo(null)
         defaultCloseOperation = DISPOSE_ON_CLOSE
         addWindowListener(object : WindowAdapter() {
             override fun windowClosed(e: WindowEvent) = scope.coroutineContext.cancelChildren()
@@ -149,7 +152,19 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
 
         add(currentPageImageView)
         add(Box.createRigidArea(Dimension(0, 5)))
-        add(JScrollPane(JPanel(FlowLayout()).apply { addAll(pagesPreviews) }))
+        add(JScrollPane(pagesPreviewsPanel).apply {
+            preferredSize = preferredSize //to set isPreferredSizeSet=true
+            maximumSize = preferredSize
+        })
+        add(JPanel().apply {
+            add(JButton("Rotate all counter-clockwise").apply { addActionListener {  } })
+            add(JButton("Rotate counter-clockwise").apply { addActionListener { } })
+            add(JButton("Remove selected").apply { addActionListener { } })
+            add(JButton("Rotate clockwise").apply { addActionListener { } })
+            add(JButton("Rotate  all clockwise").apply { addActionListener { } })
+        })
+
+        subscribeTo(selectionsManager, pdf)
     }
 
     private fun getScreenHeightWithoutTaskBar(): Int {
@@ -158,8 +173,9 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         return screenSize.height - taskBarHeight
     }
 
-    override fun update(event: ObservableEvent) = when(event) {
+    override fun update(event: ObservableEvent) = when (event) {
         is PageSelected -> repaintCurrentPageImageViewWith(event.pageIndex)
+        is ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
     }
 
     private fun repaintCurrentPageImageViewWith(pageIndex: Int) =

@@ -3,6 +3,7 @@ import kotlinx.coroutines.launch
 import java.awt.Image
 import java.util.*
 import javax.imageio.ImageIO
+import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
 enum class Rotation(val angle: Int) {
@@ -11,13 +12,14 @@ enum class Rotation(val angle: Int) {
 
 data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
-class PDFDocumentEditModel(private val pdf: PDFDocument) {
+class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailLoaded> {
     companion object {
         //TODO разобраться, почему gif не двигается
         //TODO подрезать размер gif
         private val loadingImage = ImageIO.read(PDFDocument::class.java.getResource("loading.gif"))
     }
 
+    override val subscribers: MutableList<Observer> = ArrayList()
     private val statesStack: LinkedList<DocumentState>
     val fileName = pdf.fileName
     var currentTitleImageThumbnail: JImage
@@ -82,9 +84,10 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) {
     fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> =
         getCurrentState().pages.map { (pageIndex, rotation) ->
             val pagePreview = JImage(loadingImage)
-            scope.launch { pagePreview.repaintWith(getPageThumbnail(pageIndex).rotate(rotation)) }
+            scope.launch { pagePreview.repaintWith(getPageThumbnail(pageIndex).rotate(rotation)); notifySubscribers() }
             pageIndex to pagePreview
         }.toMap()
 
     private fun getPageThumbnail(pageIndex: Int): Image = pdf.getPageThumbnail(pageIndex)
+    override fun getEvent() = ThumbnailLoaded
 }
