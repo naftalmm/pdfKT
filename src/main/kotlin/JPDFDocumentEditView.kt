@@ -145,7 +145,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
 
         add(currentPageImageView)
         add(Box.createRigidArea(Dimension(0, 5)))
-        add(JScrollPane(JPanel(FlowLayout()).also { panel -> pagesPreviews.forEach { panel.add(it) } }))
+        add(JScrollPane(JPanel(FlowLayout()).apply { addAll(pagesPreviews) }))
     }
 
     fun repaintCurrentPageImageViewWith(pageIndex: Int) =

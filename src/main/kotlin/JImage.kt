@@ -40,16 +40,14 @@ fun Image.getWidth() = getWidth(null)
 fun Image.getHeight() = getHeight(null)
 
 fun Image.toBufferedImage(): BufferedImage {
-    if (this is BufferedImage) {
-        return this
+    if (this is BufferedImage) return this
+
+    return BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB).apply {
+        createGraphics().apply {
+            drawImage(this@toBufferedImage, 0, 0, null)
+            dispose()
+        }
     }
-    val bufferedImage = BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB)
-
-    val graphics2D = bufferedImage.createGraphics()
-    graphics2D.drawImage(this, 0, 0, null)
-    graphics2D.dispose()
-
-    return bufferedImage
 }
 
 fun Image.fit(maxSize: Int): Image {
@@ -67,20 +65,21 @@ fun Image.rotate(rotation: Rotation) = rotate(rotation.angle.toDouble())
 
 fun Image.rotate(angle: Double): Image {
     if (angle == 0.0) return this
-    val width = getWidth()
-    val height = getHeight()
 
     val angleRad = Math.toRadians(angle)
     val sin = abs(sin(angleRad))
     val cos = abs(cos(angleRad))
-    val neww = floor(width * cos + height * sin).toInt()
-    val newh = floor(height * cos + width * sin).toInt()
+    val w = getWidth()
+    val h = getHeight()
+    val newW = floor(w * cos + h * sin).toInt()
+    val newH = floor(h * cos + w * sin).toInt()
 
-    val result = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-    val g = result.createGraphics()
-    g.translate((neww - width) / 2, (newh - height) / 2)
-    g.rotate(angleRad, width / 2.toDouble(), height / 2.toDouble())
-    g.drawRenderedImage(toBufferedImage(), null)
-    g.dispose()
-    return result
+    return BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB).apply {
+        createGraphics().apply {
+            translate((newW - w) / 2, (newH - h) / 2)
+            rotate(angleRad, w.toDouble() / 2, h.toDouble() / 2)
+            drawRenderedImage(toBufferedImage(), null)
+            dispose()
+        }
+    }
 }

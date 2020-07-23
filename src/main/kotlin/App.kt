@@ -1,3 +1,5 @@
+import java.awt.Component
+import java.awt.Container
 import java.awt.EventQueue
 import java.awt.datatransfer.DataFlavor
 import java.io.File
@@ -17,7 +19,7 @@ class App(title: String) : JFrame() {
 //        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
         setTitle(title)
-        val pdfsList = JPDFsList(this)
+        val pdfsList = JPDFsList()
         add(JScrollPane(pdfsList))
         transferHandler = object : TransferHandler() {
             override fun canImport(support: TransferSupport): Boolean =
@@ -60,3 +62,5 @@ fun main() {
 fun edt(runnable: () -> Unit) {
     EventQueue.invokeLater(runnable)
 }
+
+fun Container.addAll(components: Iterable<Component>) = components.forEach { add(it) }

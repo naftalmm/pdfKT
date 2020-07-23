@@ -28,7 +28,7 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) {
     }
 
     private fun initStatesStack() = LinkedList<DocumentState>()
-        .also { it.push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
+        .apply { push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
 
     private fun initTitleImage() = JImage(pdf.getPageImage(0).fit(50))
 
@@ -74,7 +74,8 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) {
 
     private fun getCurrentState(): DocumentState = statesStack.peek()
 
-    fun getCurrentPageImage(pageIndex: Int): Image = pdf.getPageImage(pageIndex).rotate(getCurrentPageRotation(pageIndex))
+    fun getCurrentPageImage(pageIndex: Int): Image =
+        pdf.getPageImage(pageIndex).rotate(getCurrentPageRotation(pageIndex))
 
     private fun getCurrentPageRotation(pageIndex: Int): Rotation = getCurrentState().pages[pageIndex] ?: Rotation.NORTH
 
