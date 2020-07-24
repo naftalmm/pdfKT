@@ -5,6 +5,7 @@ import java.awt.*
 import java.awt.event.*
 import javax.swing.*
 import javax.swing.border.Border
+import kotlin.reflect.KClass
 
 class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName),
     Observer {
@@ -40,16 +41,17 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         }
     }
 
-    class SelectionsManager : SelectedPageObservable {
-        override val subscribers: MutableList<Observer> = ArrayList()
+    class SelectionsManager : MultiObservable {
+        override val allEventsSubscribers: MutableList<Observer> = ArrayList()
+        override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
         lateinit var pagesOrder: List<JPagePreview>
         private var latestSelectedPageIndexInPagesOrderList = 0
             set(value) {
                 field = value
-                notifySubscribers()
+                notifySubscribers(PageSelected(getLatestSelectedPageIndex()))
             }
 
-        override fun getLatestSelectedPageIndex(): Int = pagesOrder[latestSelectedPageIndexInPagesOrderList].pageIndex
+        private fun getLatestSelectedPageIndex(): Int = pagesOrder[latestSelectedPageIndexInPagesOrderList].pageIndex
 
         val selectedPages = LinkedHashSet<JSelectablePanel>()
 
@@ -59,6 +61,12 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             } else {
                 selectedPages.remove(item)
             }
+
+            when (selectedPages.size) {
+                0 -> notifySubscribers(AllPagesWereUnSelected)
+                1 -> notifySubscribers(FirstPageWasSelected)
+            }
+
             latestSelectedPageIndexInPagesOrderList =
                 if (selectedPages.isNotEmpty()) pagesOrder.indexOf(selectedPages.last()) else 0
         }
@@ -138,6 +146,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private val pagesPreviews = pdf.getCurrentPagesThumbnails(scope)
         .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
     private val pagesPreviewsPanel = JPanel(FlowLayout()).apply { addAll(pagesPreviews) }
+    private val selectionDependentButtons = ArrayList<JButton>()
 
     init {
         selectionsManager.pagesOrder = pagesPreviews.toList()
@@ -157,10 +166,22 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             maximumSize = preferredSize
         })
         add(JPanel().apply {
-            add(JButton("Rotate all counter-clockwise").apply { addActionListener {  } })
-            add(JButton("Rotate counter-clockwise").apply { addActionListener { } })
-            add(JButton("Remove selected").apply { addActionListener { } })
-            add(JButton("Rotate clockwise").apply { addActionListener { } })
+            add(JButton("Rotate all counter-clockwise").apply { addActionListener { } })
+            add(JButton("Rotate counter-clockwise").apply {
+                isEnabled = false
+                selectionDependentButtons.add(this)
+                addActionListener { }
+            })
+            add(JButton("Remove selected").apply {
+                isEnabled = false
+                selectionDependentButtons.add(this)
+                addActionListener { }
+            })
+            add(JButton("Rotate clockwise").apply {
+                isEnabled = false
+                selectionDependentButtons.add(this)
+                addActionListener { }
+            })
             add(JButton("Rotate  all clockwise").apply { addActionListener { } })
         })
 
@@ -175,7 +196,9 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
 
     override fun update(event: ObservableEvent) = when (event) {
         is PageSelected -> repaintCurrentPageImageViewWith(event.pageIndex)
-        is ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
+        ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
+        AllPagesWereUnSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = false } }
+        FirstPageWasSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = true } }
     }
 
     private fun repaintCurrentPageImageViewWith(pageIndex: Int) =
