@@ -44,7 +44,19 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     class SelectionsManager : MultiObservable {
         override val allEventsSubscribers: MutableList<Observer> = ArrayList()
         override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
-        lateinit var panelsOrder: List<JSelectablePanel>
+        private val panelsOrder: MutableList<JSelectablePanel> = ArrayList()
+
+        fun setPanelsOrder(panelsOrder: List<JSelectablePanel>) {
+            with(this.panelsOrder) {
+                clear()
+                addAll(panelsOrder)
+            }
+
+            selectedPanels.clear()
+            notifySubscribers(AllPagesWereUnSelected)
+            latestSelectedPanelIndex = 0
+        }
+
         private var latestSelectedPanelIndex = 0
             set(value) {
                 field = value
@@ -132,14 +144,13 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val currentImageMaxDimension = 800
     private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension))
-    private var selectionsManager = SelectionsManager()
-    private val pagesPreviews = pdf.getCurrentPagesThumbnails(scope)
-        .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
+    private val selectionsManager = SelectionsManager()
+    private var pagesPreviews = getCurrentPagesPreviews()
     private val pagesPreviewsPanel = JPanel(FlowLayout()).apply { addAll(pagesPreviews) }
     private val selectionDependentButtons = ArrayList<JButton>()
 
     init {
-        selectionsManager.panelsOrder = pagesPreviews.toList()
+        selectionsManager.setPanelsOrder(pagesPreviews)
 
         layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
         setSize(DEFAULT_WIDTH, getScreenHeightWithoutTaskBar())
@@ -165,7 +176,10 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             add(JButton("Remove selected").apply {
                 isEnabled = false
                 selectionDependentButtons.add(this)
-                addActionListener { }
+                addActionListener {
+                    pdf.removePages(getSelectedPagesIndexes())
+                    setPagesPreviews()
+                }
             })
             add(JButton("Rotate clockwise").apply {
                 isEnabled = false
@@ -177,6 +191,25 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
 
         subscribeTo(selectionsManager, pdf)
     }
+
+    private fun getCurrentPagesPreviews() = pdf.getCurrentPagesThumbnails(scope)
+        .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
+
+    private fun setPagesPreviews() {
+        pagesPreviews = getCurrentPagesPreviews()
+        edt {
+            with(pagesPreviewsPanel) {
+                removeAll()
+                addAll(pagesPreviews)
+                validate()
+                repaint()
+            }
+        }
+        selectionsManager.setPanelsOrder(pagesPreviews)
+    }
+
+    private fun getSelectedPagesIndexes() =
+        selectionsManager.selectedPanels.map { it as JPagePreview }.map { it.pageIndex }.toSet()
 
     private fun getScreenHeightWithoutTaskBar(): Int {
         val screenSize: Dimension = Toolkit.getDefaultToolkit().screenSize

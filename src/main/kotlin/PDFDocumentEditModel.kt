@@ -7,7 +7,21 @@ import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
 enum class Rotation(val angle: Int) {
-    NORTH(0), EAST(90), SOUTH(180), WEST(270)
+    NORTH(0), EAST(90), SOUTH(180), WEST(270);
+
+    fun rotateClockwise() = when (this) {
+        NORTH -> EAST
+        EAST -> SOUTH
+        SOUTH -> WEST
+        WEST -> NORTH
+    }
+
+    fun rotateCounterClockwise() = when (this) {
+        NORTH -> WEST
+        EAST -> NORTH
+        SOUTH -> EAST
+        WEST -> SOUTH
+    }
 }
 
 data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
@@ -35,28 +49,34 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailL
     private fun initTitleImage() = JImage(pdf.getPageImage(0).fit(50))
 
     fun removePages(indexes: Set<Int>) {
-        val prevState = statesStack.last()
-        val newState =
-            DocumentState(prevState.pages.filterKeys { indexes.contains(it) } as LinkedHashMap<Int, Rotation>)
-        statesStack.add(newState)
-        changeTitleImageThumbnail(prevState, newState)
+        val newState = DocumentState(getCurrentState().pages.filterNotTo(LinkedHashMap()) { indexes.contains(it.key) })
+        changeState(newState)
     }
 
-    fun rotatePages(indexes: Set<Int>, rotation: Rotation) {
-        val prevState = statesStack.last()
-        val newState =
-            DocumentState(prevState.pages
-                .map { (k, v) -> if (indexes.contains(k)) k to rotation else k to v }
-                .toMap(LinkedHashMap()))
-        statesStack.add(newState)
-        changeTitleImageThumbnail(prevState, newState)
+    fun rotatePagesClockwise(indexes: Set<Int>) {
+        val newState = DocumentState(getCurrentState().pages
+            .map { (k, v) -> k to if (indexes.contains(k)) v.rotateClockwise() else v }
+            .toMap(LinkedHashMap()))
+        changeState(newState)
+    }
+
+    fun rotatePagesCounterClockwise(indexes: Set<Int>) {
+        val newState = DocumentState(getCurrentState().pages
+            .map { (k, v) -> k to if (indexes.contains(k)) v.rotateCounterClockwise() else v }
+            .toMap(LinkedHashMap()))
+        changeState(newState)
     }
 
     fun restorePreviousState() {
         if (statesStack.size > 1) {
-            val prevState = statesStack.pop()
-            changeTitleImageThumbnail(prevState, statesStack.peek())
+            val prevState = statesStack.removeLast()
+            changeTitleImageThumbnail(prevState, statesStack.last())
         }
+    }
+
+    private fun changeState(newState: DocumentState) {
+        statesStack.addLast(newState)
+        changeTitleImageThumbnail(statesStack.last(), newState)
     }
 
     private fun changeTitleImageThumbnail(prevState: DocumentState, newState: DocumentState) {
@@ -74,12 +94,11 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailL
         return pdf.getPageImage(currentTitleImageIndex).rotate(currentTitleImageRotation)
     }
 
-    private fun getCurrentState(): DocumentState = statesStack.peek()
+    private fun getCurrentState(): DocumentState = statesStack.last()
 
-    fun getCurrentPageImage(pageIndex: Int): Image =
-        pdf.getPageImage(pageIndex).rotate(getCurrentPageRotation(pageIndex))
+    fun getCurrentPageImage(pageIndex: Int) = pdf.getPageImage(pageIndex).rotate(getCurrentPageRotation(pageIndex))
 
-    private fun getCurrentPageRotation(pageIndex: Int): Rotation = getCurrentState().pages[pageIndex] ?: Rotation.NORTH
+    private fun getCurrentPageRotation(pageIndex: Int) = getCurrentState().pages[pageIndex] ?: Rotation.NORTH
 
     fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> =
         getCurrentState().pages.map { (pageIndex, rotation) ->
