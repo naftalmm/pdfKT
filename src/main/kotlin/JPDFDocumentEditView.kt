@@ -44,31 +44,29 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     class SelectionsManager : MultiObservable {
         override val allEventsSubscribers: MutableList<Observer> = ArrayList()
         override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
-        lateinit var pagesOrder: List<JPagePreview>
-        private var latestSelectedPageIndexInPagesOrderList = 0
+        lateinit var panelsOrder: List<JSelectablePanel>
+        private var latestSelectedPanelIndex = 0
             set(value) {
                 field = value
-                notifySubscribers(PageSelected(getLatestSelectedPageIndex()))
+                notifySubscribers(PanelSelected(panelsOrder[latestSelectedPanelIndex]))
             }
 
-        private fun getLatestSelectedPageIndex(): Int = pagesOrder[latestSelectedPageIndexInPagesOrderList].pageIndex
-
-        val selectedPages = LinkedHashSet<JSelectablePanel>()
+        val selectedPanels = LinkedHashSet<JSelectablePanel>()
 
         fun toggleSelection(item: JSelectablePanel) {
             if (item.toggleSelect()) {
-                selectedPages.add(item)
+                selectedPanels.add(item)
             } else {
-                selectedPages.remove(item)
+                selectedPanels.remove(item)
             }
 
-            when (selectedPages.size) {
+            when (selectedPanels.size) {
                 0 -> notifySubscribers(AllPagesWereUnSelected)
                 1 -> notifySubscribers(FirstPageWasSelected)
             }
 
-            latestSelectedPageIndexInPagesOrderList =
-                if (selectedPages.isNotEmpty()) pagesOrder.indexOf(selectedPages.last()) else 0
+            latestSelectedPanelIndex =
+                if (selectedPanels.isNotEmpty()) panelsOrder.indexOf(selectedPanels.last()) else 0
         }
 
         fun setSelection(item: JSelectablePanel) {
@@ -77,28 +75,28 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         }
 
         private fun clearSelection() {
-            selectedPages.forEach { it.unselect() }
-            selectedPages.clear()
+            selectedPanels.forEach { it.unselect() }
+            selectedPanels.clear()
         }
 
         fun rangeSelectFromLatestSelectedTo(item: JSelectablePanel) {
-            if (selectedPages.isEmpty()) {
+            if (selectedPanels.isEmpty()) {
                 toggleSelection(item)
                 return
             }
 
-            val itemIndex = pagesOrder.indexOf(item)
-            selectRange(latestSelectedPageIndexInPagesOrderList, itemIndex)
-            latestSelectedPageIndexInPagesOrderList = itemIndex
+            val itemIndex = panelsOrder.indexOf(item)
+            selectRange(latestSelectedPanelIndex, itemIndex)
+            latestSelectedPanelIndex = itemIndex
         }
 
         private fun selectRange(fromIndexInclusive: Int, toIndexInclusive: Int) {
             val range =
                 if (fromIndexInclusive < toIndexInclusive) fromIndexInclusive..toIndexInclusive
                 else (fromIndexInclusive downTo toIndexInclusive)
-            range.map { pagesOrder[it] }.forEach {
+            range.map { panelsOrder[it] }.forEach {
                 it.select()
-                selectedPages.add(it)
+                selectedPanels.add(it)
             }
         }
     }
@@ -149,7 +147,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private val selectionDependentButtons = ArrayList<JButton>()
 
     init {
-        selectionsManager.pagesOrder = pagesPreviews.toList()
+        selectionsManager.panelsOrder = pagesPreviews.toList()
 
         layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
         setSize(DEFAULT_WIDTH, getScreenHeightWithoutTaskBar())
@@ -195,7 +193,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     }
 
     override fun update(event: ObservableEvent) = when (event) {
-        is PageSelected -> repaintCurrentPageImageViewWith(event.pageIndex)
+        is PanelSelected -> repaintCurrentPageImageViewWith((event.panel as JPagePreview).pageIndex)
         ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
         AllPagesWereUnSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = false } }
         FirstPageWasSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = true } }
