@@ -145,12 +145,12 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private val currentImageMaxDimension = 800
     private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension))
     private val selectionsManager = SelectionsManager()
-    private var pagesPreviews = getCurrentPagesPreviews()
-    private val pagesPreviewsPanel = JPanel(FlowLayout()).apply { addAll(pagesPreviews) }
+    private lateinit var pagesPreviews: List<JPagePreview>
+    private val pagesPreviewsPanel = JPanel(FlowLayout())
     private val selectionDependentButtons = ArrayList<JButton>()
 
     init {
-        selectionsManager.setPanelsOrder(pagesPreviews)
+        initPagesPreviews()
 
         layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
         setSize(DEFAULT_WIDTH, getScreenHeightWithoutTaskBar())
@@ -190,6 +190,12 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         })
 
         subscribeTo(selectionsManager, pdf)
+    }
+
+    private fun initPagesPreviews() {
+        pagesPreviews = getCurrentPagesPreviews()
+        pagesPreviewsPanel.addAll(pagesPreviews)
+        selectionsManager.setPanelsOrder(pagesPreviews)
     }
 
     private fun getCurrentPagesPreviews() = pdf.getCurrentPagesThumbnails(scope)
