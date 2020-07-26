@@ -48,7 +48,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         private var latestSelectedPanelIndex = 0
             set(value) {
                 field = value
-                notifySubscribers(PanelSelected(panelsOrder[latestSelectedPanelIndex]))
+                notifySubscribers(PanelSelected(panelsOrder[value]))
             }
 
         val selectedPanels = LinkedHashSet<JSelectablePanel>()
