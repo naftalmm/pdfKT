@@ -33,6 +33,7 @@ interface Observable<T : ObservableEvent> : AbstractObservable {
     fun notifySubscribers() = subscribers.forEach { it.update(getEvent()) }
     fun getEvent(): T
 }
+
 interface MultiObservable : AbstractObservable {
     val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>>
     val allEventsSubscribers: MutableList<Observer>

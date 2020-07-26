@@ -107,7 +107,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(thumbnail)
             add(JLabel((pageIndex + 1).toString()))
-            addMouseListener(object : MouseListener {
+            addMouseListener(object : MouseAdapter() {
                 fun MouseEvent.isCtrlClick(): Boolean {
                     val ctrlClick = InputEvent.BUTTON1_MASK or InputEvent.CTRL_MASK
                     return modifiers and ctrlClick == ctrlClick
@@ -118,12 +118,6 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                     return modifiers and shiftClick == shiftClick
                 }
 
-                override fun mouseEntered(e: MouseEvent) {}
-
-                override fun mousePressed(e: MouseEvent) {}
-
-                override fun mouseReleased(e: MouseEvent) {}
-
                 override fun mouseClicked(e: MouseEvent) {
                     when {
                         e.isShiftClick() -> selectionsManager.rangeSelectFromLatestSelectedTo(this@JPagePreview)
@@ -131,8 +125,6 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                         else -> selectionsManager.setSelection(this@JPagePreview)
                     }
                 }
-
-                override fun mouseExited(e: MouseEvent) {}
             })
         }
     }
