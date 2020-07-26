@@ -75,8 +75,9 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailL
     }
 
     private fun changeState(newState: DocumentState) {
+        val prevState = getCurrentState()
         statesStack.addLast(newState)
-        changeTitleImageThumbnail(statesStack.last(), newState)
+        changeTitleImageThumbnail(prevState, newState)
     }
 
     private fun changeTitleImageThumbnail(prevState: DocumentState, newState: DocumentState) {

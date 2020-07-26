@@ -74,11 +74,11 @@ fun Image.rotate(angle: Double): Image {
     val newW = floor(w * cos + h * sin).toInt()
     val newH = floor(h * cos + w * sin).toInt()
 
-    return BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB).apply {
+    return BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB).apply {
         createGraphics().apply {
             translate((newW - w) / 2, (newH - h) / 2)
             rotate(angleRad, w.toDouble() / 2, h.toDouble() / 2)
-            drawRenderedImage(toBufferedImage(), null)
+            drawRenderedImage(this@rotate.toBufferedImage(), null)
             dispose()
         }
     }
