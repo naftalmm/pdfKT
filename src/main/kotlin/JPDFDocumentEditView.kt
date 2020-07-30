@@ -44,26 +44,36 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     class SelectionsManager : MultiObservable {
         override val allEventsSubscribers: MutableList<Observer> = ArrayList()
         override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
-        private val panelsOrder: MutableList<JSelectablePanel> = ArrayList()
-
-        fun setPanelsOrder(panelsOrder: List<JSelectablePanel>) {
-            with(this.panelsOrder) {
-                clear()
-                addAll(panelsOrder)
-            }
-
-            selectedPanels.clear()
-            notifySubscribers(AllPagesWereUnSelected)
-            latestSelectedPanelIndex = 0
-        }
-
-        private var latestSelectedPanelIndex = 0
+        private val panelsOrder: LinkedHashMap<JSelectablePanel, Int> = LinkedHashMap()
+        private var latestSelectedPanel: JSelectablePanel? = null
             set(value) {
                 field = value
-                notifySubscribers(PanelSelected(panelsOrder[value]))
+                notifySubscribers(PanelSelected(value ?: panelsOrder.asIterable().first().key))
             }
 
         val selectedPanels = LinkedHashSet<JSelectablePanel>()
+
+        fun setPanelsOrder(panelsOrder: List<JSelectablePanel>, preserveSelection: Boolean = false) {
+            val selectedPanelsIndexes =
+                if (preserveSelection) selectedPanels.map { this.panelsOrder[it] ?: return } else emptyList()
+
+            with(this.panelsOrder) {
+                clear()
+                panelsOrder.withIndex().forEach { this[it.value] = it.index }
+            }
+
+            selectedPanels.clear()
+            if (!preserveSelection) {
+                notifySubscribers(AllPagesWereUnSelected)
+            } else {
+                selectedPanelsIndexes.map { panelsOrder[it] }.forEach {
+                    it.select()
+                    selectedPanels.add(it)
+                }
+            }
+
+            latestSelectedPanel = selectedPanels.lastOrNull()
+        }
 
         fun toggleSelection(item: JSelectablePanel) {
             if (item.toggleSelect()) {
@@ -77,8 +87,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 1 -> notifySubscribers(FirstPageWasSelected)
             }
 
-            latestSelectedPanelIndex =
-                if (selectedPanels.isNotEmpty()) panelsOrder.indexOf(selectedPanels.last()) else 0
+            latestSelectedPanel = selectedPanels.lastOrNull()
         }
 
         fun setSelection(item: JSelectablePanel) {
@@ -92,24 +101,24 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         }
 
         fun rangeSelectFromLatestSelectedTo(item: JSelectablePanel) {
-            if (selectedPanels.isEmpty()) {
+            val fromIndexInclusive = panelsOrder[latestSelectedPanel]
+            if (fromIndexInclusive == null) {
                 toggleSelection(item)
                 return
             }
 
-            val itemIndex = panelsOrder.indexOf(item)
-            selectRange(latestSelectedPanelIndex, itemIndex)
-            latestSelectedPanelIndex = itemIndex
-        }
+            val iterator = panelsOrder.keys.toList().listIterator(fromIndexInclusive)
+            val reversed = fromIndexInclusive > panelsOrder[item]!!
 
-        private fun selectRange(fromIndexInclusive: Int, toIndexInclusive: Int) {
-            val range =
-                if (fromIndexInclusive < toIndexInclusive) fromIndexInclusive..toIndexInclusive
-                else (fromIndexInclusive downTo toIndexInclusive)
-            range.map { panelsOrder[it] }.forEach {
+            var it = latestSelectedPanel
+            while (it != item) {
+                it = if (reversed) iterator.previous() else iterator.next()
                 it.select()
                 selectedPanels.add(it)
+                if (it == item) break
             }
+
+            latestSelectedPanel = item
         }
     }
 
@@ -167,11 +176,19 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             maximumSize = preferredSize
         })
         add(JPanel().apply {
-            add(JButton("Rotate all counter-clockwise").apply { addActionListener { } })
+            add(JButton("Rotate all counter-clockwise").apply {
+                addActionListener {
+                    pdf.rotateAllPagesCounterClockwise()
+                    setPagesPreviews(preserveSelection = true)
+                }
+            })
             add(JButton("Rotate counter-clockwise").apply {
                 isEnabled = false
                 selectionDependentButtons.add(this)
-                addActionListener { }
+                addActionListener {
+                    pdf.rotatePagesCounterClockwise(getSelectedPagesIndexes())
+                    setPagesPreviews(preserveSelection = true)
+                }
             })
             add(JButton("Remove selected").apply {
                 isEnabled = false
@@ -184,9 +201,17 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             add(JButton("Rotate clockwise").apply {
                 isEnabled = false
                 selectionDependentButtons.add(this)
-                addActionListener { }
+                addActionListener {
+                    pdf.rotatePagesClockwise(getSelectedPagesIndexes())
+                    setPagesPreviews(preserveSelection = true)
+                }
             })
-            add(JButton("Rotate  all clockwise").apply { addActionListener { } })
+            add(JButton("Rotate all clockwise").apply {
+                addActionListener {
+                    pdf.rotateAllPagesClockwise()
+                    setPagesPreviews(preserveSelection = true)
+                }
+            })
         })
 
         subscribeTo(selectionsManager, pdf)
@@ -201,7 +226,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private fun getCurrentPagesPreviews() = pdf.getCurrentPagesThumbnails(scope)
         .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
 
-    private fun setPagesPreviews() {
+    private fun setPagesPreviews(preserveSelection: Boolean = false) {
         pagesPreviews = getCurrentPagesPreviews()
         edt {
             with(pagesPreviewsPanel) {
@@ -211,7 +236,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 repaint()
             }
         }
-        selectionsManager.setPanelsOrder(pagesPreviews)
+        selectionsManager.setPanelsOrder(pagesPreviews, preserveSelection)
     }
 
     private fun getSelectedPagesIndexes() =
@@ -230,6 +255,11 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         FirstPageWasSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = true } }
     }
 
-    private fun repaintCurrentPageImageViewWith(pageIndex: Int) =
+    private fun repaintCurrentPageImageViewWith(pageIndex: Int) {
         currentPageImageView.repaintWith(pdf.getCurrentPageImage(pageIndex).fit(currentImageMaxDimension))
+        edt {
+            validate()
+            repaint()
+        }
+    }
 }

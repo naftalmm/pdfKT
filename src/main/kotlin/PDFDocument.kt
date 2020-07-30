@@ -34,6 +34,8 @@ class PDFDocument(file: File) {
         numberOfPages = document.numberOfPages
     }
 
+    fun getPreloadedPageThumbnail(page: Int) = imagesThumbnails[page]
+
     fun getPageThumbnail(page: Int) =
         imagesThumbnails.getOrPut(page) { getPageImage(page).fit(IMAGES_THUMBNAILS_SIZE) }
 

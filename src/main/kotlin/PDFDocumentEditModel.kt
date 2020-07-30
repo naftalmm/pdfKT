@@ -53,9 +53,23 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailL
         changeState(newState)
     }
 
+    fun rotateAllPagesClockwise() {
+        val newState = DocumentState(getCurrentState().pages
+            .map { (k, v) -> k to v.rotateClockwise() }
+            .toMap(LinkedHashMap()))
+        changeState(newState)
+    }
+
     fun rotatePagesClockwise(indexes: Set<Int>) {
         val newState = DocumentState(getCurrentState().pages
             .map { (k, v) -> k to if (indexes.contains(k)) v.rotateClockwise() else v }
+            .toMap(LinkedHashMap()))
+        changeState(newState)
+    }
+
+    fun rotateAllPagesCounterClockwise() {
+        val newState = DocumentState(getCurrentState().pages
+            .map { (k, v) -> k to v.rotateCounterClockwise() }
             .toMap(LinkedHashMap()))
         changeState(newState)
     }
@@ -103,11 +117,16 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailL
 
     fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> =
         getCurrentState().pages.map { (pageIndex, rotation) ->
-            val pagePreview = JImage(loadingImage)
-            scope.launch { pagePreview.repaintWith(getPageThumbnail(pageIndex).rotate(rotation)); notifySubscribers() }
+            val preloadedThumbnail = pdf.getPreloadedPageThumbnail(pageIndex)
+            val pagePreview = JImage(preloadedThumbnail?.rotate(rotation) ?: loadingImage)
+            if (preloadedThumbnail == null) {
+                scope.launch {
+                    pagePreview.repaintWith(pdf.getPageThumbnail(pageIndex).rotate(rotation))
+                    notifySubscribers()
+                }
+            }
             pageIndex to pagePreview
         }.toMap()
 
-    private fun getPageThumbnail(pageIndex: Int): Image = pdf.getPageThumbnail(pageIndex)
     override fun getEvent() = ThumbnailLoaded
 }
