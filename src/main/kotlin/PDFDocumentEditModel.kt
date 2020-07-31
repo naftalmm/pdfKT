@@ -2,7 +2,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.awt.Image
 import java.util.*
-import javax.imageio.ImageIO
+import javax.swing.ImageIcon
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 import kotlin.reflect.KClass
@@ -29,9 +29,8 @@ data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
 class PDFDocumentEditModel(private val pdf: PDFDocument) : MultiObservable {
     companion object {
-        //TODO разобраться, почему gif не двигается
         //TODO подрезать размер gif
-        private val loadingImage = ImageIO.read(PDFDocument::class.java.getResource("loading.gif"))
+        private val loadingImage = ImageIcon(PDFDocument::class.java.getResource("loading.gif")).image
     }
 
     override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
