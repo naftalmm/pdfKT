@@ -150,9 +150,29 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         }
     }
 
+    private class JCurrentPageView(private val pdf: PDFDocumentEditModel) : JPanel() {
+        private val currentImageMaxDimension = 600
+
+        private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension)).apply {
+            alignmentY = Component.CENTER_ALIGNMENT
+        }
+
+        init {
+            add(currentPageImageView)
+            add(Box.createRigidArea(Dimension(0, currentImageMaxDimension)))
+        }
+
+        fun setCurrentPage(pageIndex: Int) {
+            currentPageImageView.repaintWith(pdf.getCurrentPageImage(pageIndex).fit(currentImageMaxDimension))
+            edt {
+                validate()
+                repaint()
+            }
+        }
+    }
+
     private val scope = CoroutineScope(Dispatchers.Default)
-    private val currentImageMaxDimension = 800
-    private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension))
+    private val currentPageView = JCurrentPageView(pdf)
     private val selectionsManager = SelectionsManager()
     private lateinit var pagesPreviews: List<JPagePreview>
     private val pagesPreviewsPanel = JPanel(FlowLayout())
@@ -161,7 +181,6 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     init {
         initPagesPreviews()
 
-        layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
         setSize(DEFAULT_WIDTH, getScreenHeightWithoutTaskBar())
         setLocationRelativeTo(null)
         defaultCloseOperation = DISPOSE_ON_CLOSE
@@ -169,48 +188,51 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             override fun windowClosed(e: WindowEvent) = scope.coroutineContext.cancelChildren()
         })
 
-        add(currentPageImageView)
-        add(Box.createRigidArea(Dimension(0, 5)))
-        add(JScrollPane(pagesPreviewsPanel).apply {
-            preferredSize = preferredSize //to set isPreferredSizeSet=true
-            maximumSize = preferredSize
-        })
         add(JPanel().apply {
-            add(JButton("Rotate all counter-clockwise").apply {
-                addActionListener {
-                    pdf.rotateAllPagesCounterClockwise()
-                    setPagesPreviews(preserveSelection = true)
-                }
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            add(currentPageView)
+            add(Box.createRigidArea(Dimension(0, 5)))
+            add(JScrollPane(pagesPreviewsPanel).apply {
+                preferredSize = preferredSize //to set isPreferredSizeSet=true
+                maximumSize = preferredSize
             })
-            add(JButton("Rotate counter-clockwise").apply {
-                isEnabled = false
-                selectionDependentButtons.add(this)
-                addActionListener {
-                    pdf.rotatePagesCounterClockwise(getSelectedPagesIndexes())
-                    setPagesPreviews(preserveSelection = true)
-                }
-            })
-            add(JButton("Remove selected").apply {
-                isEnabled = false
-                selectionDependentButtons.add(this)
-                addActionListener {
-                    pdf.removePages(getSelectedPagesIndexes())
-                    setPagesPreviews()
-                }
-            })
-            add(JButton("Rotate clockwise").apply {
-                isEnabled = false
-                selectionDependentButtons.add(this)
-                addActionListener {
-                    pdf.rotatePagesClockwise(getSelectedPagesIndexes())
-                    setPagesPreviews(preserveSelection = true)
-                }
-            })
-            add(JButton("Rotate all clockwise").apply {
-                addActionListener {
-                    pdf.rotateAllPagesClockwise()
-                    setPagesPreviews(preserveSelection = true)
-                }
+            add(JPanel().apply {
+                add(JButton("Rotate all counter-clockwise").apply {
+                    addActionListener {
+                        pdf.rotateAllPagesCounterClockwise()
+                        setPagesPreviews(preserveSelection = true)
+                    }
+                })
+                add(JButton("Rotate counter-clockwise").apply {
+                    isEnabled = false
+                    selectionDependentButtons.add(this)
+                    addActionListener {
+                        pdf.rotatePagesCounterClockwise(getSelectedPagesIndexes())
+                        setPagesPreviews(preserveSelection = true)
+                    }
+                })
+                add(JButton("Remove selected").apply {
+                    isEnabled = false
+                    selectionDependentButtons.add(this)
+                    addActionListener {
+                        pdf.removePages(getSelectedPagesIndexes())
+                        setPagesPreviews()
+                    }
+                })
+                add(JButton("Rotate clockwise").apply {
+                    isEnabled = false
+                    selectionDependentButtons.add(this)
+                    addActionListener {
+                        pdf.rotatePagesClockwise(getSelectedPagesIndexes())
+                        setPagesPreviews(preserveSelection = true)
+                    }
+                })
+                add(JButton("Rotate all clockwise").apply {
+                    addActionListener {
+                        pdf.rotateAllPagesClockwise()
+                        setPagesPreviews(preserveSelection = true)
+                    }
+                })
             })
         })
 
@@ -249,14 +271,11 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     }
 
     override fun update(event: ObservableEvent) = when (event) {
-        is PanelSelected -> repaintCurrentPageImageViewWith((event.panel as JPagePreview).pageIndex)
+        is PanelSelected -> currentPageView.setCurrentPage((event.panel as JPagePreview).pageIndex)
         ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
         AllPagesWereUnSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = false } }
         FirstPageWasSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = true } }
-    }
-
-    private fun repaintCurrentPageImageViewWith(pageIndex: Int) {
-        currentPageImageView.repaintWith(pdf.getCurrentPageImage(pageIndex).fit(currentImageMaxDimension))
+    }.also {
         edt {
             validate()
             repaint()
