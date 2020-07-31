@@ -14,6 +14,8 @@ interface Observer {
             is MultiObservable -> it.addAllEventsObserver(this)
         }
     }
+
+    fun doNothing() = Unit
 }
 
 sealed class ObservableEvent
@@ -21,6 +23,7 @@ data class PanelSelected(val panel: JPDFDocumentEditView.JSelectablePanel) : Obs
 object ThumbnailLoaded : ObservableEvent()
 object AllPagesWereUnSelected : ObservableEvent()
 object FirstPageWasSelected : ObservableEvent()
+object TitleImageChanged : ObservableEvent()
 
 interface AbstractObservable
 interface Observable<T : ObservableEvent> : AbstractObservable {

@@ -1,9 +1,25 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
-import java.awt.*
-import java.awt.event.*
-import javax.swing.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Frame
+import java.awt.Toolkit
+import java.awt.event.InputEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import javax.swing.BorderFactory
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JDialog
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JScrollPane
 import javax.swing.border.Border
 import kotlin.reflect.KClass
 
@@ -236,7 +252,8 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             })
         })
 
-        subscribeTo(selectionsManager, pdf)
+        subscribeTo(selectionsManager)
+        subscribeTo(pdf to listOf(ThumbnailLoaded::class))
     }
 
     private fun initPagesPreviews() {
@@ -275,6 +292,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
         AllPagesWereUnSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = false } }
         FirstPageWasSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = true } }
+        else -> doNothing()
     }.also {
         edt {
             validate()

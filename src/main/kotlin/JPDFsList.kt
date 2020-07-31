@@ -4,7 +4,8 @@ import javax.swing.BoxLayout
 import javax.swing.JPanel
 
 class JPDFsList : JPanel() {
-    val pdfDocumentsCache = WeakHashMap<File, PDFDocument>()
+    private val pdfDocumentsCache = WeakHashMap<File, PDFDocument>()
+
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
     }

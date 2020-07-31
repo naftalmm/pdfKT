@@ -5,6 +5,7 @@ import java.util.*
 import javax.imageio.ImageIO
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
+import kotlin.reflect.KClass
 
 enum class Rotation(val angle: Int) {
     NORTH(0), EAST(90), SOUTH(180), WEST(270);
@@ -26,27 +27,24 @@ enum class Rotation(val angle: Int) {
 
 data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
-class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailLoaded> {
+class PDFDocumentEditModel(private val pdf: PDFDocument) : MultiObservable {
     companion object {
         //TODO разобраться, почему gif не двигается
         //TODO подрезать размер gif
         private val loadingImage = ImageIO.read(PDFDocument::class.java.getResource("loading.gif"))
     }
 
-    override val subscribers: MutableList<Observer> = ArrayList()
+    override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
+    override val allEventsSubscribers: MutableList<Observer> = ArrayList()
     private val statesStack: LinkedList<DocumentState>
     val fileName = pdf.fileName
-    var currentTitleImageThumbnail: JImage
 
     init {
         statesStack = initStatesStack()
-        currentTitleImageThumbnail = initTitleImage()
     }
 
     private fun initStatesStack() = LinkedList<DocumentState>()
         .apply { push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
-
-    private fun initTitleImage() = JImage(pdf.getPageImage(0).fit(50))
 
     fun removePages(indexes: Set<Int>) {
         val newState = DocumentState(getCurrentState().pages.filterNotTo(LinkedHashMap()) { indexes.contains(it.key) })
@@ -101,7 +99,7 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailL
             return
         }
 
-        currentTitleImageThumbnail.repaintWith(pdf.getPageImage(newTitlePageIndex).fit(50).rotate(newTitlePageRotation))
+        notifySubscribers(TitleImageChanged)
     }
 
     fun getCurrentTitleImage(): Image {
@@ -122,11 +120,9 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : Observable<ThumbnailL
             if (preloadedThumbnail == null) {
                 scope.launch {
                     pagePreview.repaintWith(pdf.getPageThumbnail(pageIndex).rotate(rotation))
-                    notifySubscribers()
+                    notifySubscribers(ThumbnailLoaded)
                 }
             }
             pageIndex to pagePreview
         }.toMap()
-
-    override fun getEvent() = ThumbnailLoaded
 }
