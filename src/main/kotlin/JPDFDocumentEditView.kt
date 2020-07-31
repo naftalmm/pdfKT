@@ -8,6 +8,8 @@ import java.awt.FlowLayout
 import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.event.InputEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.WindowAdapter
@@ -204,6 +206,18 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             override fun windowClosed(e: WindowEvent) = scope.coroutineContext.cancelChildren()
         })
 
+        isFocusable = true
+        addKeyListener(object : KeyAdapter() {
+            fun KeyEvent.isCtrlZ(): Boolean = isControlDown && keyCode == KeyEvent.VK_Z
+
+            override fun keyPressed(e: KeyEvent) = with(e) {
+                if (isCtrlZ()) {
+                    pdf.restorePreviousState()
+                    setPagesPreviews()
+                }
+            }
+        })
+
         add(JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(currentPageView)
@@ -214,12 +228,14 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             })
             add(JPanel().apply {
                 add(JButton("Rotate all counter-clockwise").apply {
+                    isFocusable = false
                     addActionListener {
                         pdf.rotateAllPagesCounterClockwise()
                         setPagesPreviews(preserveSelection = true)
                     }
                 })
                 add(JButton("Rotate counter-clockwise").apply {
+                    isFocusable = false
                     isEnabled = false
                     selectionDependentButtons.add(this)
                     addActionListener {
@@ -228,6 +244,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                     }
                 })
                 add(JButton("Remove selected").apply {
+                    isFocusable = false
                     isEnabled = false
                     selectionDependentButtons.add(this)
                     addActionListener {
@@ -236,6 +253,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                     }
                 })
                 add(JButton("Rotate clockwise").apply {
+                    isFocusable = false
                     isEnabled = false
                     selectionDependentButtons.add(this)
                     addActionListener {
@@ -244,6 +262,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                     }
                 })
                 add(JButton("Rotate all clockwise").apply {
+                    isFocusable = false
                     addActionListener {
                         pdf.rotateAllPagesClockwise()
                         setPagesPreviews(preserveSelection = true)
