@@ -29,7 +29,6 @@ data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
 class PDFDocumentEditModel(private val pdf: PDFDocument) : MultiObservable {
     companion object {
-        //TODO подрезать размер gif
         private val loadingImage = ImageIcon(PDFDocument::class.java.getResource("loading.gif")).image
     }
 

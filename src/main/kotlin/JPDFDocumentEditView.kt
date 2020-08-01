@@ -222,10 +222,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(currentPageView)
             add(Box.createRigidArea(Dimension(0, 5)))
-            add(JScrollPane(pagesPreviewsPanel).apply {
-                preferredSize = preferredSize //to set isPreferredSizeSet=true
-                maximumSize = preferredSize
-            })
+            add(JScrollPane(pagesPreviewsPanel))
             add(JPanel().apply {
                 add(JButton("Rotate all counter-clockwise").apply {
                     isFocusable = false
