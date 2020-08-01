@@ -1,19 +1,24 @@
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.*
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 
 class JPDFsList : JPanel() {
-    private val pdfDocumentsCache = WeakHashMap<File, PDFDocument>()
+    private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()
 
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
     }
 
     fun addPDFDocuments(files: Iterable<File>) {
-        val pdfs = files.associateWith { pdfDocumentsCache.getOrElse(it) { PDFDocument(it) } }
-        pdfs.values.map { PDFDocumentEditModel(it) }.forEach { edt { add(JPDFDocumentListItem(it, this)) } }
-        pdfs.forEach { (file, pdf) -> pdfDocumentsCache.putIfAbsent(file, pdf) }
+        for (file in files) {
+            val pdfDocument = pdfDocumentsCache[file]?.get() ?: PDFDocument(file)
+            pdfDocumentsCache.putIfAbsent(file, WeakReference(pdfDocument))
+            edt {
+                add(JPDFDocumentListItem(PDFDocumentEditModel(pdfDocument), this))
+            }
+        }
         edt {
             validate()
             repaint()
