@@ -138,6 +138,25 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
 
             latestSelectedPanel = item
         }
+
+        fun selectAll() {
+            val wasNoSelectedPanels = selectedPanels.size == 0
+            panelsOrder.keys.forEach { panel ->
+                panel.select()
+                selectedPanels.add(panel)
+            }
+            if (wasNoSelectedPanels) notifySubscribers(FirstPageWasSelected)
+        }
+
+        fun selectAllFromLatestToFirst() {
+            latestSelectedPanel ?: return
+            rangeSelectFromLatestSelectedTo(panelsOrder.keys.asIterable().first())
+        }
+
+        fun selectAllFromLatestToLast() {
+            latestSelectedPanel ?: return
+            rangeSelectFromLatestSelectedTo(panelsOrder.keys.asIterable().last())
+        }
     }
 
     class JPagePreview(val pageIndex: Int, thumbnail: JImage, selectionsManager: SelectionsManager) :
@@ -209,62 +228,68 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         isFocusable = true
         addKeyListener(object : KeyAdapter() {
             fun KeyEvent.isCtrlZ(): Boolean = isControlDown && keyCode == KeyEvent.VK_Z
+            fun KeyEvent.isCtrlA(): Boolean = isControlDown && keyCode == KeyEvent.VK_A
+            fun KeyEvent.isShiftHome(): Boolean = isShiftDown && keyCode == KeyEvent.VK_HOME
+            fun KeyEvent.isShiftEnd(): Boolean = isShiftDown && keyCode == KeyEvent.VK_END
 
             override fun keyPressed(e: KeyEvent) = with(e) {
-                if (isCtrlZ()) {
-                    pdf.restorePreviousState()
-                    setPagesPreviews()
+                when {
+                    isCtrlZ() -> {
+                        pdf.restorePreviousState()
+                        setPagesPreviews()
+                    }
+                    isCtrlA() -> selectionsManager.selectAll()
+                    isShiftHome() -> selectionsManager.selectAllFromLatestToFirst()
+                    isShiftEnd() -> selectionsManager.selectAllFromLatestToLast()
                 }
             }
         })
 
+        layout = BoxLayout(contentPane, BoxLayout.Y_AXIS)
+        add(currentPageView)
+        add(Box.createRigidArea(Dimension(0, 5)))
+        add(JScrollPane(pagesPreviewsPanel))
         add(JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(currentPageView)
-            add(Box.createRigidArea(Dimension(0, 5)))
-            add(JScrollPane(pagesPreviewsPanel))
-            add(JPanel().apply {
-                add(JButton("Rotate all counter-clockwise").apply {
-                    isFocusable = false
-                    addActionListener {
-                        pdf.rotateAllPagesCounterClockwise()
-                        setPagesPreviews(preserveSelection = true)
-                    }
-                })
-                add(JButton("Rotate counter-clockwise").apply {
-                    isFocusable = false
-                    isEnabled = false
-                    selectionDependentButtons.add(this)
-                    addActionListener {
-                        pdf.rotatePagesCounterClockwise(getSelectedPagesIndexes())
-                        setPagesPreviews(preserveSelection = true)
-                    }
-                })
-                add(JButton("Remove selected").apply {
-                    isFocusable = false
-                    isEnabled = false
-                    selectionDependentButtons.add(this)
-                    addActionListener {
-                        pdf.removePages(getSelectedPagesIndexes())
-                        setPagesPreviews()
-                    }
-                })
-                add(JButton("Rotate clockwise").apply {
-                    isFocusable = false
-                    isEnabled = false
-                    selectionDependentButtons.add(this)
-                    addActionListener {
-                        pdf.rotatePagesClockwise(getSelectedPagesIndexes())
-                        setPagesPreviews(preserveSelection = true)
-                    }
-                })
-                add(JButton("Rotate all clockwise").apply {
-                    isFocusable = false
-                    addActionListener {
-                        pdf.rotateAllPagesClockwise()
-                        setPagesPreviews(preserveSelection = true)
-                    }
-                })
+            add(JButton("Rotate all counter-clockwise").apply {
+                isFocusable = false
+                addActionListener {
+                    pdf.rotateAllPagesCounterClockwise()
+                    setPagesPreviews(preserveSelection = true)
+                }
+            })
+            add(JButton("Rotate counter-clockwise").apply {
+                isFocusable = false
+                isEnabled = false
+                selectionDependentButtons.add(this)
+                addActionListener {
+                    pdf.rotatePagesCounterClockwise(getSelectedPagesIndexes())
+                    setPagesPreviews(preserveSelection = true)
+                }
+            })
+            add(JButton("Remove selected").apply {
+                isFocusable = false
+                isEnabled = false
+                selectionDependentButtons.add(this)
+                addActionListener {
+                    pdf.removePages(getSelectedPagesIndexes())
+                    setPagesPreviews()
+                }
+            })
+            add(JButton("Rotate clockwise").apply {
+                isFocusable = false
+                isEnabled = false
+                selectionDependentButtons.add(this)
+                addActionListener {
+                    pdf.rotatePagesClockwise(getSelectedPagesIndexes())
+                    setPagesPreviews(preserveSelection = true)
+                }
+            })
+            add(JButton("Rotate all clockwise").apply {
+                isFocusable = false
+                addActionListener {
+                    pdf.rotateAllPagesClockwise()
+                    setPagesPreviews(preserveSelection = true)
+                }
             })
         })
 
