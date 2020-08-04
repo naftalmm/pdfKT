@@ -20,7 +20,7 @@ import java.awt.event.KeyEvent.VK_F as F
 const val DEFAULT_WIDTH = 1000
 const val DEFAULT_HEIGHT = 750
 
-class App(title: String) : JFrame(), Observer {
+class App : JFrame(), Observer {
     private val pdfsList = JPDFsList()
     private val dropPDFsLabel = JLabel("Drop PDFs here").apply {
         horizontalAlignment = SwingConstants.CENTER
@@ -34,7 +34,7 @@ class App(title: String) : JFrame(), Observer {
     init {
         //        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
-        setTitle(title)
+        title = "pdfKT"
         addMenuBar()
         add(cardLayout)
 
@@ -63,6 +63,7 @@ class App(title: String) : JFrame(), Observer {
         defaultCloseOperation = EXIT_ON_CLOSE
         setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         setLocationRelativeTo(null)
+        isVisible = true
     }
 
     private fun addMenuBar() {
@@ -95,11 +96,8 @@ class App(title: String) : JFrame(), Observer {
     }
 }
 
-private fun createAndShowGUI() {
-    edt {
-        val frame = App("pdfKT")
-        frame.isVisible = true
-    }
+private fun createAndShowGUI() = edt {
+    App()
 }
 
 fun main() {
