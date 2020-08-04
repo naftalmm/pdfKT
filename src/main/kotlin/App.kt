@@ -31,6 +31,7 @@ class App : JFrame(), Observer {
         add(pdfsList)
     }
     private var fcCurrentDirectory: File? = null
+
     init {
         //        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
