@@ -1,16 +1,56 @@
+import java.awt.CardLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.EventQueue
 import java.awt.datatransfer.DataFlavor
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
 import java.io.File
+import java.util.*
+import javax.swing.JFileChooser
 import javax.swing.JFrame
-import javax.swing.JScrollPane
+import javax.swing.JLabel
+import javax.swing.JMenu
+import javax.swing.JMenuBar
+import javax.swing.JMenuItem
+import javax.swing.JPanel
+import javax.swing.KeyStroke
+import javax.swing.SwingConstants
 import javax.swing.TransferHandler
+import javax.swing.filechooser.FileNameExtensionFilter
+import java.awt.event.KeyEvent.VK_F as F
 
 const val DEFAULT_WIDTH = 1000
 const val DEFAULT_HEIGHT = 750
 
-class App(title: String) : JFrame() {
+class MyCardLayout : JPanel(CardLayout()) {
+    private val componentPseudonyms = WeakHashMap<Component, String>()
+    private var counter = 0
+
+    fun show(comp: Component) {
+        (this.layout as CardLayout).show(this, componentPseudonyms[comp])
+    }
+
+    override fun add(comp: Component): Component {
+        synchronized(this) {
+            val pseudonym = componentPseudonyms.getOrPut(comp) { counter++.toString() }
+            super.add(comp, pseudonym)
+            return comp
+        }
+    }
+}
+
+class App(title: String) : JFrame(), Observer {
+    private val pdfsList = JPDFsList()
+    private val dropPDFsLabel = JLabel("Drop PDFs here").apply {
+        horizontalAlignment = SwingConstants.CENTER
+        verticalAlignment = SwingConstants.CENTER
+    }
+    private val cardLayout = MyCardLayout().apply {
+        add(dropPDFsLabel)
+        add(pdfsList)
+    }
+    private var fcCurrentDirectory: File? = null
     init {
         createUI(title)
     }
@@ -19,8 +59,10 @@ class App(title: String) : JFrame() {
 //        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
         setTitle(title)
-        val pdfsList = JPDFsList()
-        add(JScrollPane(pdfsList))
+        addMenuBar()
+        add(cardLayout)
+
+        subscribeTo(pdfsList)
         transferHandler = object : TransferHandler() {
             override fun canImport(support: TransferSupport): Boolean =
                 support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
@@ -45,6 +87,35 @@ class App(title: String) : JFrame() {
         defaultCloseOperation = EXIT_ON_CLOSE
         setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         setLocationRelativeTo(null)
+    }
+
+    private fun addMenuBar() {
+        jMenuBar = JMenuBar().apply {
+            add(JMenu("File").apply {
+                mnemonic = F
+                add(JMenuItem("Add PDFs...").apply {
+                    val ctrlO = KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK)
+                    accelerator = ctrlO
+                    addActionListener {
+                        val fc = JFileChooser().apply {
+                            isMultiSelectionEnabled = true
+                            fileFilter = FileNameExtensionFilter("PDF files", "pdf")
+                            currentDirectory = fcCurrentDirectory
+                        }
+                        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                            pdfsList.addPDFDocuments(fc.selectedFiles.asIterable())
+                        }
+                        fcCurrentDirectory = fc.currentDirectory
+                    }
+                })
+            })
+        }
+    }
+
+    override fun update(event: ObservableEvent) = when (event) {
+        FirstPDFWasAdded -> edt { cardLayout.show(pdfsList) }
+        AllPDFsWereRemoved -> edt { cardLayout.show(dropPDFsLabel) }
+        else -> doNothing()
     }
 }
 

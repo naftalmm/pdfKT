@@ -176,10 +176,10 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                     return modifiers and shiftClick == shiftClick
                 }
 
-                override fun mouseClicked(e: MouseEvent) {
+                override fun mouseClicked(e: MouseEvent) = with(e) {
                     when {
-                        e.isShiftClick() -> selectionsManager.rangeSelectFromLatestSelectedTo(this@JPagePreview)
-                        e.isCtrlClick() -> selectionsManager.toggleSelection(this@JPagePreview)
+                        isShiftClick() -> selectionsManager.rangeSelectFromLatestSelectedTo(this@JPagePreview)
+                        isCtrlClick() -> selectionsManager.toggleSelection(this@JPagePreview)
                         else -> selectionsManager.setSelection(this@JPagePreview)
                     }
                 }

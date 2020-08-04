@@ -35,7 +35,7 @@ class JPDFDocumentListItem(private val pdf: PDFDocumentEditModel, private val pd
     }
 
     override fun update(event: ObservableEvent) = when (event) {
-        is TitleImageChanged -> {
+        TitleImageChanged -> {
             currentTitleImage.repaintWith(getCurrentTitleImagePreview())
             edt {
                 validate()
