@@ -19,7 +19,7 @@ interface Observer {
 }
 
 sealed class ObservableEvent
-data class PanelSelected(val panel: JPDFDocumentEditView.JSelectablePanel) : ObservableEvent()
+data class PanelSelected(val panel: JSelectablePanel) : ObservableEvent()
 object ThumbnailLoaded : ObservableEvent()
 object AllPagesWereUnSelected : ObservableEvent()
 object FirstPageWasSelected : ObservableEvent()

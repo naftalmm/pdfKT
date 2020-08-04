@@ -1,4 +1,3 @@
-import java.awt.CardLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.EventQueue
@@ -6,14 +5,12 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.io.File
-import java.util.*
 import javax.swing.JFileChooser
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JMenu
 import javax.swing.JMenuBar
 import javax.swing.JMenuItem
-import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.TransferHandler
@@ -23,40 +20,19 @@ import java.awt.event.KeyEvent.VK_F as F
 const val DEFAULT_WIDTH = 1000
 const val DEFAULT_HEIGHT = 750
 
-class MyCardLayout : JPanel(CardLayout()) {
-    private val componentPseudonyms = WeakHashMap<Component, String>()
-    private var counter = 0
-
-    fun show(comp: Component) {
-        (this.layout as CardLayout).show(this, componentPseudonyms[comp])
-    }
-
-    override fun add(comp: Component): Component {
-        synchronized(this) {
-            val pseudonym = componentPseudonyms.getOrPut(comp) { counter++.toString() }
-            super.add(comp, pseudonym)
-            return comp
-        }
-    }
-}
-
 class App(title: String) : JFrame(), Observer {
     private val pdfsList = JPDFsList()
     private val dropPDFsLabel = JLabel("Drop PDFs here").apply {
         horizontalAlignment = SwingConstants.CENTER
         verticalAlignment = SwingConstants.CENTER
     }
-    private val cardLayout = MyCardLayout().apply {
+    private val cardLayout = JPanelCardLayout().apply {
         add(dropPDFsLabel)
         add(pdfsList)
     }
     private var fcCurrentDirectory: File? = null
     init {
-        createUI(title)
-    }
-
-    private fun createUI(title: String) {
-//        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+        //        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
         setTitle(title)
         addMenuBar()

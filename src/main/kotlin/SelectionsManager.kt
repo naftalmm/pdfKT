@@ -1,0 +1,101 @@
+import kotlin.reflect.KClass
+
+class SelectionsManager : MultiObservable {
+    override val allEventsSubscribers: MutableList<Observer> = ArrayList()
+    override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
+    private val panelsOrder: LinkedHashMap<JSelectablePanel, Int> = LinkedHashMap()
+    private var latestSelectedPanel: JSelectablePanel? = null
+        set(value) {
+            field = value
+            notifySubscribers(PanelSelected(value ?: panelsOrder.asIterable().first().key))
+        }
+
+    val selectedPanels = LinkedHashSet<JSelectablePanel>()
+
+    fun setPanelsOrder(panelsOrder: List<JSelectablePanel>, preserveSelection: Boolean = false) {
+        val selectedPanelsIndexes =
+            if (preserveSelection) selectedPanels.map { this.panelsOrder[it] ?: return } else emptyList()
+
+        with(this.panelsOrder) {
+            clear()
+            panelsOrder.withIndex().forEach { this[it.value] = it.index }
+        }
+
+        selectedPanels.clear()
+        if (!preserveSelection) {
+            notifySubscribers(AllPagesWereUnSelected)
+        } else {
+            selectedPanelsIndexes.map { panelsOrder[it] }.forEach {
+                it.select()
+                selectedPanels.add(it)
+            }
+        }
+
+        latestSelectedPanel = selectedPanels.lastOrNull()
+    }
+
+    fun toggleSelection(item: JSelectablePanel) {
+        if (item.toggleSelect()) {
+            selectedPanels.add(item)
+        } else {
+            selectedPanels.remove(item)
+        }
+
+        when (selectedPanels.size) {
+            0 -> notifySubscribers(AllPagesWereUnSelected)
+            1 -> notifySubscribers(FirstPageWasSelected)
+        }
+
+        latestSelectedPanel = selectedPanels.lastOrNull()
+    }
+
+    fun setSelection(item: JSelectablePanel) {
+        clearSelection()
+        toggleSelection(item)
+    }
+
+    private fun clearSelection() {
+        selectedPanels.forEach { it.unselect() }
+        selectedPanels.clear()
+    }
+
+    fun rangeSelectFromLatestSelectedTo(item: JSelectablePanel) {
+        val fromIndexInclusive = panelsOrder[latestSelectedPanel]
+        if (fromIndexInclusive == null) {
+            toggleSelection(item)
+            return
+        }
+
+        val iterator = panelsOrder.keys.toList().listIterator(fromIndexInclusive)
+        val reversed = fromIndexInclusive > panelsOrder[item]!!
+
+        var it = latestSelectedPanel
+        while (it != item) {
+            it = if (reversed) iterator.previous() else iterator.next()
+            it.select()
+            selectedPanels.add(it)
+            if (it == item) break
+        }
+
+        latestSelectedPanel = item
+    }
+
+    fun selectAll() {
+        val wasNoSelectedPanels = selectedPanels.size == 0
+        panelsOrder.keys.forEach { panel ->
+            panel.select()
+            selectedPanels.add(panel)
+        }
+        if (wasNoSelectedPanels) notifySubscribers(FirstPageWasSelected)
+    }
+
+    fun selectAllFromLatestSelectedToFirst() {
+        latestSelectedPanel ?: return
+        rangeSelectFromLatestSelectedTo(panelsOrder.keys.asIterable().first())
+    }
+
+    fun selectAllFromLatestSelectedToLast() {
+        latestSelectedPanel ?: return
+        rangeSelectFromLatestSelectedTo(panelsOrder.keys.asIterable().last())
+    }
+}

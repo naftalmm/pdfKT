@@ -1,212 +1,23 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
-import java.awt.Color
-import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Frame
 import java.awt.Toolkit
-import java.awt.event.InputEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import javax.swing.BorderFactory
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JDialog
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
-import javax.swing.border.Border
-import kotlin.reflect.KClass
 
 class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName),
     Observer {
-    open class JSelectablePanel : JPanel() {
-        companion object {
-            private val blueBorder: Border = BorderFactory.createLineBorder(Color.BLUE)
-            private val emptyBorder: Border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
-        }
-
-        init {
-            border = emptyBorder
-        }
-
-        private var isSelected = false
-            set(value) {
-                field = value
-                edt {
-                    border = if (value) blueBorder else emptyBorder
-                }
-            }
-
-        fun toggleSelect(): Boolean {
-            isSelected = !isSelected
-            return isSelected
-        }
-
-        fun select() {
-            isSelected = true
-        }
-
-        fun unselect() {
-            isSelected = false
-        }
-    }
-
-    class SelectionsManager : MultiObservable {
-        override val allEventsSubscribers: MutableList<Observer> = ArrayList()
-        override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
-        private val panelsOrder: LinkedHashMap<JSelectablePanel, Int> = LinkedHashMap()
-        private var latestSelectedPanel: JSelectablePanel? = null
-            set(value) {
-                field = value
-                notifySubscribers(PanelSelected(value ?: panelsOrder.asIterable().first().key))
-            }
-
-        val selectedPanels = LinkedHashSet<JSelectablePanel>()
-
-        fun setPanelsOrder(panelsOrder: List<JSelectablePanel>, preserveSelection: Boolean = false) {
-            val selectedPanelsIndexes =
-                if (preserveSelection) selectedPanels.map { this.panelsOrder[it] ?: return } else emptyList()
-
-            with(this.panelsOrder) {
-                clear()
-                panelsOrder.withIndex().forEach { this[it.value] = it.index }
-            }
-
-            selectedPanels.clear()
-            if (!preserveSelection) {
-                notifySubscribers(AllPagesWereUnSelected)
-            } else {
-                selectedPanelsIndexes.map { panelsOrder[it] }.forEach {
-                    it.select()
-                    selectedPanels.add(it)
-                }
-            }
-
-            latestSelectedPanel = selectedPanels.lastOrNull()
-        }
-
-        fun toggleSelection(item: JSelectablePanel) {
-            if (item.toggleSelect()) {
-                selectedPanels.add(item)
-            } else {
-                selectedPanels.remove(item)
-            }
-
-            when (selectedPanels.size) {
-                0 -> notifySubscribers(AllPagesWereUnSelected)
-                1 -> notifySubscribers(FirstPageWasSelected)
-            }
-
-            latestSelectedPanel = selectedPanels.lastOrNull()
-        }
-
-        fun setSelection(item: JSelectablePanel) {
-            clearSelection()
-            toggleSelection(item)
-        }
-
-        private fun clearSelection() {
-            selectedPanels.forEach { it.unselect() }
-            selectedPanels.clear()
-        }
-
-        fun rangeSelectFromLatestSelectedTo(item: JSelectablePanel) {
-            val fromIndexInclusive = panelsOrder[latestSelectedPanel]
-            if (fromIndexInclusive == null) {
-                toggleSelection(item)
-                return
-            }
-
-            val iterator = panelsOrder.keys.toList().listIterator(fromIndexInclusive)
-            val reversed = fromIndexInclusive > panelsOrder[item]!!
-
-            var it = latestSelectedPanel
-            while (it != item) {
-                it = if (reversed) iterator.previous() else iterator.next()
-                it.select()
-                selectedPanels.add(it)
-                if (it == item) break
-            }
-
-            latestSelectedPanel = item
-        }
-
-        fun selectAll() {
-            val wasNoSelectedPanels = selectedPanels.size == 0
-            panelsOrder.keys.forEach { panel ->
-                panel.select()
-                selectedPanels.add(panel)
-            }
-            if (wasNoSelectedPanels) notifySubscribers(FirstPageWasSelected)
-        }
-
-        fun selectAllFromLatestToFirst() {
-            latestSelectedPanel ?: return
-            rangeSelectFromLatestSelectedTo(panelsOrder.keys.asIterable().first())
-        }
-
-        fun selectAllFromLatestToLast() {
-            latestSelectedPanel ?: return
-            rangeSelectFromLatestSelectedTo(panelsOrder.keys.asIterable().last())
-        }
-    }
-
-    class JPagePreview(val pageIndex: Int, thumbnail: JImage, selectionsManager: SelectionsManager) :
-        JSelectablePanel() {
-        init {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(thumbnail)
-            add(JLabel((pageIndex + 1).toString()))
-            addMouseListener(object : MouseAdapter() {
-                fun MouseEvent.isCtrlClick(): Boolean {
-                    val ctrlClick = InputEvent.BUTTON1_MASK or InputEvent.CTRL_MASK
-                    return modifiers and ctrlClick == ctrlClick
-                }
-
-                fun MouseEvent.isShiftClick(): Boolean {
-                    val shiftClick = InputEvent.BUTTON1_MASK or InputEvent.SHIFT_MASK
-                    return modifiers and shiftClick == shiftClick
-                }
-
-                override fun mouseClicked(e: MouseEvent) = with(e) {
-                    when {
-                        isShiftClick() -> selectionsManager.rangeSelectFromLatestSelectedTo(this@JPagePreview)
-                        isCtrlClick() -> selectionsManager.toggleSelection(this@JPagePreview)
-                        else -> selectionsManager.setSelection(this@JPagePreview)
-                    }
-                }
-            })
-        }
-    }
-
-    private class JCurrentPageView(private val pdf: PDFDocumentEditModel) : JPanel() {
-        private val currentImageMaxDimension = 600
-
-        private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension)).apply {
-            alignmentY = Component.CENTER_ALIGNMENT
-        }
-
-        init {
-            add(currentPageImageView)
-            add(Box.createRigidArea(Dimension(0, currentImageMaxDimension)))
-        }
-
-        fun setCurrentPage(pageIndex: Int) {
-            currentPageImageView.repaintWith(pdf.getCurrentPageImage(pageIndex).fit(currentImageMaxDimension))
-            edt {
-                validate()
-                repaint()
-            }
-        }
-    }
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val currentPageView = JCurrentPageView(pdf)
@@ -236,11 +47,11 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 when {
                     isCtrlZ() -> {
                         pdf.restorePreviousState()
-                        setPagesPreviews()
+                        refreshPagesPreviews()
                     }
                     isCtrlA() -> selectionsManager.selectAll()
-                    isShiftHome() -> selectionsManager.selectAllFromLatestToFirst()
-                    isShiftEnd() -> selectionsManager.selectAllFromLatestToLast()
+                    isShiftHome() -> selectionsManager.selectAllFromLatestSelectedToFirst()
+                    isShiftEnd() -> selectionsManager.selectAllFromLatestSelectedToLast()
                 }
             }
         })
@@ -254,7 +65,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 isFocusable = false
                 addActionListener {
                     pdf.rotateAllPagesCounterClockwise()
-                    setPagesPreviews(preserveSelection = true)
+                    refreshPagesPreviews(preserveSelection = true)
                 }
             })
             add(JButton("Rotate counter-clockwise").apply {
@@ -263,7 +74,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 selectionDependentButtons.add(this)
                 addActionListener {
                     pdf.rotatePagesCounterClockwise(getSelectedPagesIndexes())
-                    setPagesPreviews(preserveSelection = true)
+                    refreshPagesPreviews(preserveSelection = true)
                 }
             })
             add(JButton("Remove selected").apply {
@@ -272,7 +83,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 selectionDependentButtons.add(this)
                 addActionListener {
                     pdf.removePages(getSelectedPagesIndexes())
-                    setPagesPreviews()
+                    refreshPagesPreviews()
                 }
             })
             add(JButton("Rotate clockwise").apply {
@@ -281,14 +92,14 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                 selectionDependentButtons.add(this)
                 addActionListener {
                     pdf.rotatePagesClockwise(getSelectedPagesIndexes())
-                    setPagesPreviews(preserveSelection = true)
+                    refreshPagesPreviews(preserveSelection = true)
                 }
             })
             add(JButton("Rotate all clockwise").apply {
                 isFocusable = false
                 addActionListener {
                     pdf.rotateAllPagesClockwise()
-                    setPagesPreviews(preserveSelection = true)
+                    refreshPagesPreviews(preserveSelection = true)
                 }
             })
         })
@@ -306,7 +117,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private fun getCurrentPagesPreviews() = pdf.getCurrentPagesThumbnails(scope)
         .map { (pageIndex, thumbnail) -> JPagePreview(pageIndex, thumbnail, selectionsManager) }
 
-    private fun setPagesPreviews(preserveSelection: Boolean = false) {
+    private fun refreshPagesPreviews(preserveSelection: Boolean = false) {
         pagesPreviews = getCurrentPagesPreviews()
         edt {
             with(pagesPreviewsPanel) {
