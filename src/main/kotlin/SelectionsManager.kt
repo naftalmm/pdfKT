@@ -41,22 +41,30 @@ class SelectionsManager : MultiObservable {
             selectedPanels.remove(item)
         }
 
-        when (selectedPanels.size) {
-            0 -> notifySubscribers(AllPagesWereUnSelected)
-            1 -> notifySubscribers(FirstPageWasSelected)
-        }
+        checkSelectionSizeAndNotifySubscribers()
 
         latestSelectedPanel = selectedPanels.lastOrNull()
     }
 
-    fun setSelection(item: JSelectablePanel) {
-        clearSelection()
-        toggleSelection(item)
+    private fun checkSelectionSizeAndNotifySubscribers() {
+        when (selectedPanels.size) {
+            0 -> notifySubscribers(AllPagesWereUnSelected)
+            1 -> {
+                notifySubscribers(FirstPageWasSelected)
+                if (panelsOrder.size == 1) notifySubscribers(AllPagesWereSelected)
+                else if (panelsOrder.size == 2) notifySubscribers(PenultPageWasSelected)
+            }
+            panelsOrder.size - 1 -> notifySubscribers(PenultPageWasSelected)
+            panelsOrder.size -> notifySubscribers(AllPagesWereSelected)
+        }
     }
 
-    private fun clearSelection() {
+    fun isAllPagesSelected() = selectedPanels.size == panelsOrder.size
+
+    fun setSelection(item: JSelectablePanel) {
         selectedPanels.forEach { it.unselect() }
         selectedPanels.clear()
+        toggleSelection(item)
     }
 
     fun rangeSelectFromLatestSelectedTo(item: JSelectablePanel) {
@@ -77,6 +85,8 @@ class SelectionsManager : MultiObservable {
             if (it == item) break
         }
 
+        checkSelectionSizeAndNotifySubscribers()
+
         latestSelectedPanel = item
     }
 
@@ -87,6 +97,7 @@ class SelectionsManager : MultiObservable {
             selectedPanels.add(panel)
         }
         if (wasNoSelectedPanels) notifySubscribers(FirstPageWasSelected)
+        notifySubscribers(AllPagesWereSelected)
     }
 
     fun selectAllFromLatestSelectedToFirst() {

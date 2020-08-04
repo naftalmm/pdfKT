@@ -26,6 +26,8 @@ object FirstPageWasSelected : ObservableEvent()
 object AllPDFsWereRemoved : ObservableEvent()
 object FirstPDFWasAdded : ObservableEvent()
 object TitleImageChanged : ObservableEvent()
+object AllPagesWereSelected: ObservableEvent()
+object PenultPageWasSelected: ObservableEvent()
 
 interface AbstractObservable
 interface Observable<T : ObservableEvent> : AbstractObservable {

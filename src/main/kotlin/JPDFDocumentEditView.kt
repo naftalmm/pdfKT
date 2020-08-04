@@ -24,7 +24,8 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     private val selectionsManager = SelectionsManager()
     private lateinit var pagesPreviews: List<JPagePreview>
     private val pagesPreviewsPanel = JPanel(FlowLayout())
-    private val selectionDependentButtons = ArrayList<JButton>()
+    private val notEmptySelectionDependentButtons = ArrayList<JButton>()
+    private val someButNotAllSelectionDependentButtons = ArrayList<JButton>()
 
     init {
         initPagesPreviews()
@@ -40,6 +41,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         addKeyListener(object : KeyAdapter() {
             fun KeyEvent.isCtrlZ(): Boolean = isControlDown && keyCode == KeyEvent.VK_Z
             fun KeyEvent.isCtrlA(): Boolean = isControlDown && keyCode == KeyEvent.VK_A
+            fun KeyEvent.isDelete(): Boolean = keyCode == KeyEvent.VK_DELETE
             fun KeyEvent.isShiftHome(): Boolean = isShiftDown && keyCode == KeyEvent.VK_HOME
             fun KeyEvent.isShiftEnd(): Boolean = isShiftDown && keyCode == KeyEvent.VK_END
 
@@ -52,6 +54,10 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
                     isCtrlA() -> selectionsManager.selectAll()
                     isShiftHome() -> selectionsManager.selectAllFromLatestSelectedToFirst()
                     isShiftEnd() -> selectionsManager.selectAllFromLatestSelectedToLast()
+                    isDelete() -> if (!selectionsManager.isAllPagesSelected()) {
+                        pdf.removePages(getSelectedPagesIndexes())
+                        refreshPagesPreviews()
+                    }
                 }
             }
         })
@@ -71,7 +77,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             add(JButton("Rotate counter-clockwise").apply {
                 isFocusable = false
                 isEnabled = false
-                selectionDependentButtons.add(this)
+                notEmptySelectionDependentButtons.add(this)
                 addActionListener {
                     pdf.rotatePagesCounterClockwise(getSelectedPagesIndexes())
                     refreshPagesPreviews(preserveSelection = true)
@@ -80,7 +86,8 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             add(JButton("Remove selected").apply {
                 isFocusable = false
                 isEnabled = false
-                selectionDependentButtons.add(this)
+                notEmptySelectionDependentButtons.add(this)
+                someButNotAllSelectionDependentButtons.add(this)
                 addActionListener {
                     pdf.removePages(getSelectedPagesIndexes())
                     refreshPagesPreviews()
@@ -89,7 +96,7 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
             add(JButton("Rotate clockwise").apply {
                 isFocusable = false
                 isEnabled = false
-                selectionDependentButtons.add(this)
+                notEmptySelectionDependentButtons.add(this)
                 addActionListener {
                     pdf.rotatePagesClockwise(getSelectedPagesIndexes())
                     refreshPagesPreviews(preserveSelection = true)
@@ -142,8 +149,10 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
     override fun update(event: ObservableEvent) = when (event) {
         is PanelSelected -> currentPageView.setCurrentPage((event.panel as JPagePreview).pageIndex)
         ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
-        AllPagesWereUnSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = false } }
-        FirstPageWasSelected -> edt { selectionDependentButtons.forEach { it.isEnabled = true } }
+        AllPagesWereUnSelected -> edt { notEmptySelectionDependentButtons.forEach { it.isEnabled = false } }
+        FirstPageWasSelected -> edt { notEmptySelectionDependentButtons.forEach { it.isEnabled = true } }
+        PenultPageWasSelected -> edt { someButNotAllSelectionDependentButtons.forEach { it.isEnabled = true } }
+        AllPagesWereSelected -> edt { someButNotAllSelectionDependentButtons.forEach { it.isEnabled = false } }
         else -> doNothing()
     }.also {
         edt {
