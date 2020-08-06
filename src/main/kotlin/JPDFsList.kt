@@ -17,7 +17,7 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
 
     //TODO rearrange PDFs in list
     fun addPDFDocuments(files: Iterable<File>) {
-        val thereWereNoPDFsAdded = getPDFsListSize() == 0
+        val wasEmpty = getPDFsListSize() == 0
         for (file in files) {
             val pdfDocument = pdfDocumentsCache[file]?.get() ?: PDFDocument(file)
             pdfDocumentsCache.putIfAbsent(file, WeakReference(pdfDocument))
@@ -30,9 +30,7 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
         edt {
             validate()
             repaint()
-            if (thereWereNoPDFsAdded && getPDFsListSize() > 0) {
-                notifySubscribers(FirstPDFWasAdded)
-            }
+            if (wasEmpty && getPDFsListSize() > 0) notifySubscribers(FirstPDFWasAdded)
         }
     }
 
