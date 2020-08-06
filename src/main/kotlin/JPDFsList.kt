@@ -6,7 +6,7 @@ import javax.swing.JPanel
 import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
 
-class JPDFsList : JPanel(), MultiObservable {
+class JPDFsList : JPanel(), MultiObservable, Observer {
     override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
     override val allEventsSubscribers: MutableList<Observer> = ArrayList()
     private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()
@@ -22,7 +22,9 @@ class JPDFsList : JPanel(), MultiObservable {
             val pdfDocument = pdfDocumentsCache[file]?.get() ?: PDFDocument(file)
             pdfDocumentsCache.putIfAbsent(file, WeakReference(pdfDocument))
             edt {
-                add(JPDFDocumentListItem(PDFDocumentEditModel(pdfDocument), this))
+                val pdf = JPDFDocumentListItem(PDFDocumentEditModel(pdfDocument))
+                add(pdf)
+                subscribeTo(pdf)
             }
         }
         edt {
@@ -34,7 +36,7 @@ class JPDFsList : JPanel(), MultiObservable {
         }
     }
 
-    fun removePDFDocument(doc: JPDFDocumentListItem) {
+    private fun removePDFDocument(doc: JPDFDocumentListItem) {
         edt {
             remove(doc)
             validate()
@@ -44,4 +46,9 @@ class JPDFsList : JPanel(), MultiObservable {
     }
 
     private fun getPDFsListSize() = this.components.size
+
+    override fun update(event: ObservableEvent) = when (event) {
+        is PDFWasRemoved -> removePDFDocument(event.pdf)
+        else -> doNothing()
+    }
 }
