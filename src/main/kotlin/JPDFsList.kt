@@ -1,11 +1,11 @@
 import java.awt.Cursor
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.*
 import javax.swing.BoxLayout
 import javax.swing.JPanel
-import javax.swing.event.MouseInputAdapter
 import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
 
@@ -13,14 +13,15 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
     override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
     override val allEventsSubscribers: MutableList<Observer> = ArrayList()
     private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()
-    private val drag = object : MouseInputAdapter() {
+    private val drag = object : MouseAdapter() {
         private lateinit var pressed: MouseEvent
         private lateinit var originalCursor: Cursor
 
-        override fun mousePressed(e: MouseEvent) = with(e)  {
-            pressed = this
+        override fun mousePressed(e: MouseEvent) {
+            pressed = e
             originalCursor = cursor
             cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
+            e.component.addMouseMotionListener(this)
         }
 
         override fun mouseDragged(e: MouseEvent) = with(e) {
@@ -43,6 +44,7 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
 
         override fun mouseReleased(e: MouseEvent) {
             cursor = originalCursor
+            e.component.removeMouseMotionListener(this)
         }
     }
 
@@ -58,7 +60,6 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
 
             val pdf = JPDFDocumentListItem(PDFDocumentEditModel(pdfDocument)).apply {
                 addMouseListener(drag)
-                addMouseMotionListener(drag)
             }
             subscribeTo(pdf)
             edt {
