@@ -13,29 +13,44 @@ class JPDFsList : JLayeredPane(), MultiObservable, Observer {
     override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
     override val allEventsSubscribers: MutableList<Observer> = ArrayList()
     private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()
-    private val drag = object : SimpleVerticalDragListener() {
-        override fun mousePressed(e: MouseEvent) {
-            super.mousePressed(e)
-            moveToFront(e.component)
+    private val drag = object : MouseInputAdapter() {
+        private lateinit var pressed: MouseEvent
+        private lateinit var originalCursor: Cursor
+
+        override fun mousePressed(e: MouseEvent) = with(e)  {
+            pressed = this
+            originalCursor = cursor
+            cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
+            moveToFront(component)
+        }
+
+        override fun mouseDragged(e: MouseEvent) = with(e) {
+            val snapSize = component.height
+            val maxY = (componentCount - 1) * snapSize
+            val newY = (y + component.location.y - pressed.y).coerceIn(0, maxY) / snapSize * snapSize
+            translatePoint(0, -y + newY)
+            component.setLocation(0, newY)
+
+            edt {
+                val currentComponentIndex = components.indexOf(component)
+                val currentComponentIndexByCoordinate = component.y / snapSize
+                if (currentComponentIndex != currentComponentIndexByCoordinate) {
+                    remove(component)
+                    add(component, currentComponentIndexByCoordinate)
+                    validate()
+                    repaint()
+                }
+            }
         }
 
         override fun mouseReleased(e: MouseEvent) {
-            super.mouseReleased(e)
-            edt {
-                remove(e.component)
-                add(e.component, getIndexOfChildComponentByYCoordinate(e.component.y))
-                validate()
-                repaint()
-            }
+            cursor = originalCursor
         }
     }
 
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
     }
-
-    fun getIndexOfChildComponentByYCoordinate(y: Int) =
-        components.withIndex().find { it.value.location.y >= y }?.index ?: components.lastIndex + 1
 
     fun addPDFDocuments(files: Iterable<File>) {
         val wasEmpty = getPDFsListSize() == 0
@@ -73,24 +88,5 @@ class JPDFsList : JLayeredPane(), MultiObservable, Observer {
     override fun update(event: ObservableEvent) = when (event) {
         is PDFWasRemoved -> removePDFDocument(event.pdf)
         else -> doNothing()
-    }
-}
-
-open class SimpleVerticalDragListener : MouseInputAdapter() {
-    private lateinit var pressed: MouseEvent
-    private lateinit var originalCursor : Cursor
-    override fun mousePressed(e: MouseEvent)  = with(e) {
-        pressed = this
-        originalCursor = component.cursor
-        component.cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
-    }
-
-    override fun mouseDragged(e: MouseEvent) = with(e) {
-        translatePoint(-x, component.location.y - pressed.y)
-        component.setLocation(x, y)
-    }
-
-    override fun mouseReleased(e: MouseEvent) = with(e)  {
-        component.cursor = originalCursor
     }
 }
