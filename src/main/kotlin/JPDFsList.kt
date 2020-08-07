@@ -4,12 +4,12 @@ import java.io.File
 import java.lang.ref.WeakReference
 import java.util.*
 import javax.swing.BoxLayout
-import javax.swing.JLayeredPane
+import javax.swing.JPanel
 import javax.swing.event.MouseInputAdapter
 import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
 
-class JPDFsList : JLayeredPane(), MultiObservable, Observer {
+class JPDFsList : JPanel(), MultiObservable, Observer {
     override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
     override val allEventsSubscribers: MutableList<Observer> = ArrayList()
     private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()
@@ -21,15 +21,13 @@ class JPDFsList : JLayeredPane(), MultiObservable, Observer {
             pressed = this
             originalCursor = cursor
             cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
-            moveToFront(component)
         }
 
         override fun mouseDragged(e: MouseEvent) = with(e) {
             val snapSize = component.height
             val maxY = (componentCount - 1) * snapSize
-            val newY = (y + component.location.y - pressed.y).coerceIn(0, maxY) / snapSize * snapSize
-            translatePoint(0, -y + newY)
-            component.setLocation(0, newY)
+            translatePoint(0, component.location.y - pressed.y)
+            component.setLocation(0, y.coerceIn(0, maxY) / snapSize * snapSize)
 
             edt {
                 val currentComponentIndex = components.indexOf(component)
