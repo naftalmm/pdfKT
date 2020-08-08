@@ -19,6 +19,7 @@ class JPDFDocumentListItem(private val pdf: PDFDocumentEditModel) : JPanel(), Ob
         add(JLabel(pdf.fileName))
         add(JButton("Edit").apply { addActionListener { createAndShowEditDialog() } })
         add(JButton("Delete").apply { addActionListener { notifySubscribers() } })
+        preferredSize = Dimension(size.width, titleImageMaxSize)
         maximumSize = Dimension(Int.MAX_VALUE, titleImageMaxSize)
         alignmentX = LEFT_ALIGNMENT
         isVisible = true

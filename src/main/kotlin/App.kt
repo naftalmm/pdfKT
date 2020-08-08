@@ -11,9 +11,11 @@ import javax.swing.JLabel
 import javax.swing.JMenu
 import javax.swing.JMenuBar
 import javax.swing.JMenuItem
+import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.TransferHandler
+import javax.swing.UIManager
 import javax.swing.filechooser.FileNameExtensionFilter
 import java.awt.event.KeyEvent.VK_F as F
 
@@ -22,18 +24,18 @@ const val DEFAULT_HEIGHT = 750
 
 class App : JFrame(), Observer {
     private val pdfsList = JPDFsList()
+    private val scrollablePDFsList = JScrollPane(pdfsList)
     private val dropPDFsLabel = JLabel("Drop PDFs here").apply {
         horizontalAlignment = SwingConstants.CENTER
         verticalAlignment = SwingConstants.CENTER
     }
     private val cardLayout = JPanelCardLayout().apply {
         add(dropPDFsLabel)
-        add(pdfsList)
+        add(scrollablePDFsList)
     }
-    private var fcCurrentDirectory: File? = null
 
     init {
-        //        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
 
         title = "pdfKT"
         addMenuBar()
@@ -74,6 +76,8 @@ class App : JFrame(), Observer {
                 add(JMenuItem("Add PDFs...").apply {
                     val ctrlO = KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK)
                     accelerator = ctrlO
+
+                    var fcCurrentDirectory: File? = null
                     addActionListener {
                         val fc = JFileChooser().apply {
                             isMultiSelectionEnabled = true
@@ -91,7 +95,7 @@ class App : JFrame(), Observer {
     }
 
     override fun update(event: ObservableEvent) = when (event) {
-        FirstPDFWasAdded -> edt { cardLayout.show(pdfsList) }
+        FirstPDFWasAdded -> edt { cardLayout.show(scrollablePDFsList) }
         AllPDFsWereRemoved -> edt { cardLayout.show(dropPDFsLabel) }
         else -> doNothing()
     }
