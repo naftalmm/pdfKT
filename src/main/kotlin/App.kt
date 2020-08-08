@@ -47,9 +47,8 @@ class App : JFrame(), Observer {
                 support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
 
             override fun importData(support: TransferSupport): Boolean {
-                if (!canImport(support)) {
-                    return false
-                }
+                if (!canImport(support)) return false
+
                 try {
                     @Suppress("UNCHECKED_CAST")
                     (support.transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<File>)

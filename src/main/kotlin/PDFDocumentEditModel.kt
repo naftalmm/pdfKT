@@ -34,12 +34,8 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : MultiObservable {
 
     override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
     override val allEventsSubscribers: MutableList<Observer> = ArrayList()
-    private val statesStack: LinkedList<DocumentState>
+    private val statesStack: LinkedList<DocumentState> = initStatesStack()
     val fileName = pdf.fileName
-
-    init {
-        statesStack = initStatesStack()
-    }
 
     private fun initStatesStack() = LinkedList<DocumentState>()
         .apply { push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
