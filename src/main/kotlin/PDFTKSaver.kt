@@ -17,21 +17,23 @@ class PDFTKSaver(private val input: List<Pair<File, DocumentState>>) {
         println(pdftkCommand + "output \"${output.toAbsolutePath()}\"") //TODO
     }
 
-    private fun getHandles(files: List<File>): HashMap<File, String> {
+    private fun getHandles(files: List<File>): Map<File, String> {
+        val handles = handlesGenerator().iterator()
+        return files.associateWith { handles.next() }
+    }
+
+    private fun handlesGenerator() = sequence {
         val aChar = 65.toChar()
         val zChar = 90.toChar()
-        val result = HashMap<File, String>()
         var prefix = ""
         var i = aChar
-        for (file in files) {
+        while (true) {
             if (i > zChar) {
                 prefix += aChar
                 i = aChar
             }
-            result[file] = prefix + i
-            i++
+            yield(prefix + i++)
         }
-        return result
     }
 
     private fun getRanges(state: DocumentState): List<Pair<IntRange, Rotation>> {
