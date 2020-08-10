@@ -4,17 +4,21 @@ import java.nio.file.Path
 class PDFTKSaver(private val input: List<Pair<File, DocumentState>>) {
     fun saveTo(output: Path) {
         val handles = getHandles(input.map { it.first })
-        var pdftkCommand = handles.map { (file, handle) -> "$handle=\"${file.absolutePath}\"" }
-            .joinToString(prefix = "pdftk ", postfix = " cat ", separator = " ")
-        for ((file, state) in input) {
-            val ranges = getRanges(state)
-            for ((range, rotation) in ranges) {
+        val pdftkInputFiles =
+            handles.map { (file, handle) -> "$handle=\"${file.absolutePath}\"" }.joinToString(separator = " ")
+
+        val pdftkCommand = input.flatMap { (file, state) ->
+            getRanges(state).map { (range, rotation) ->
                 val rangeStr = if (range.first == range.last) "${range.first}" else "${range.first}-${range.last}"
                 val rotationStr = if (rotation == Rotation.NORTH) "" else rotation.toString().toLowerCase()
-                pdftkCommand += "${handles[file]}$rangeStr$rotationStr "
+                "${handles[file]}$rangeStr$rotationStr"
             }
-        }
-        println(pdftkCommand + "output \"${output.toAbsolutePath()}\"") //TODO
+        }.joinToString(
+            separator = " ",
+            prefix = "pdftk $pdftkInputFiles cat ",
+            postfix = " output \"${output.toAbsolutePath()}\""
+        )
+        println(pdftkCommand) //TODO
     }
 
     private fun getHandles(files: List<File>): Map<File, String> {
