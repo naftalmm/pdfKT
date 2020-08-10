@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 const val IMAGES_THUMBNAILS_SIZE = 200
 
-class PDFDocument(file: File) {
+class PDFDocument(val file: File) {
     val fileName: String = file.nameWithoutExtension
     val numberOfPages: Int
 

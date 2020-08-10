@@ -1,22 +1,25 @@
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.io.File
+import javax.swing.BoxLayout
+import javax.swing.JButton
 import javax.swing.JFileChooser
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JMenu
 import javax.swing.JMenuBar
 import javax.swing.JMenuItem
+import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.TransferHandler
 import javax.swing.UIManager
-import javax.swing.filechooser.FileNameExtensionFilter
 import java.awt.event.KeyEvent.VK_F as F
 
 const val DEFAULT_WIDTH = 1000
@@ -24,19 +27,34 @@ const val DEFAULT_HEIGHT = 750
 
 class App : JFrame(), Observer {
     private val pdfsList = JPDFsList()
-    private val scrollablePDFsList = JScrollPane(pdfsList)
+    private val workspace = JPanel().apply {
+        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        add(JScrollPane(pdfsList).apply {
+            alignmentX = Component.LEFT_ALIGNMENT
+        })
+        add(JButton("Save as PDF...").apply {
+            alignmentX = Component.LEFT_ALIGNMENT
+            preferredSize = Dimension(40, 120)
+            val fc = JPDFFileChooser().apply { currentDirectory = fcCurrentDirectory }
+            addActionListener {
+                if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    PDFTKSaver(pdfsList.getCurrentPDFsState()).saveTo(fc.selectedFile.toPath())
+                }
+                fcCurrentDirectory = fc.currentDirectory
+            }
+        })
+    }
     private val dropPDFsLabel = JLabel("Drop PDFs here").apply {
         horizontalAlignment = SwingConstants.CENTER
         verticalAlignment = SwingConstants.CENTER
     }
+    private var fcCurrentDirectory: File? = null
     private val cardLayout = JPanelCardLayout().apply {
         add(dropPDFsLabel)
-        add(scrollablePDFsList)
+        add(workspace)
     }
 
     init {
-        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
-
         title = "pdfKT"
         addMenuBar()
         add(cardLayout)
@@ -76,11 +94,9 @@ class App : JFrame(), Observer {
                     val ctrlO = KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK)
                     accelerator = ctrlO
 
-                    var fcCurrentDirectory: File? = null
                     addActionListener {
-                        val fc = JFileChooser().apply {
+                        val fc = JPDFFileChooser().apply {
                             isMultiSelectionEnabled = true
-                            fileFilter = FileNameExtensionFilter("PDF files", "pdf")
                             currentDirectory = fcCurrentDirectory
                         }
                         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -94,19 +110,18 @@ class App : JFrame(), Observer {
     }
 
     override fun update(event: ObservableEvent) = when (event) {
-        FirstPDFWasAdded -> edt { cardLayout.show(scrollablePDFsList) }
+        FirstPDFWasAdded -> edt { cardLayout.show(workspace) }
         AllPDFsWereRemoved -> edt { cardLayout.show(dropPDFsLabel) }
         else -> doNothing()
     }
 }
 
 private fun createAndShowGUI() = edt {
+    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
     App()
 }
 
-fun main() {
-    createAndShowGUI()
-}
+fun main() = createAndShowGUI()
 
 fun edt(runnable: () -> Unit) {
     EventQueue.invokeLater(runnable)

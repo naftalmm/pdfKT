@@ -27,7 +27,7 @@ enum class Rotation(val angle: Int) {
 
 data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
-class PDFDocumentEditModel(private val pdf: PDFDocument) : MultiObservable {
+class PDFDocumentEditModel(val pdf: PDFDocument) : MultiObservable {
     companion object {
         private val loadingImage = ImageIcon(PDFDocument::class.java.getResource("loading.gif")).image
     }
@@ -101,7 +101,7 @@ class PDFDocumentEditModel(private val pdf: PDFDocument) : MultiObservable {
         return pdf.getPageImage(currentTitleImageIndex).rotate(currentTitleImageRotation)
     }
 
-    private fun getCurrentState(): DocumentState = statesStack.last()
+    fun getCurrentState(): DocumentState = statesStack.last()
 
     fun getCurrentPageImage(pageIndex: Int) = pdf.getPageImage(pageIndex).rotate(getCurrentPageRotation(pageIndex))
 

@@ -82,7 +82,10 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
         }
     }
 
-    private fun getPDFsListSize() = this.components.size
+    private fun getPDFsListSize() = components.size
+
+    fun getCurrentPDFsState(): List<Pair<File, DocumentState>> =
+        components.map { it as JPDFDocumentListItem }.map { it.pdf }.map { it.pdf.file to it.getCurrentState() }
 
     override fun update(event: ObservableEvent) = when (event) {
         is PDFWasRemoved -> removePDFDocument(event.pdf)

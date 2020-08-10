@@ -6,7 +6,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class JPDFDocumentListItem(private val pdf: PDFDocumentEditModel) : JPanel(), Observer, Observable<PDFWasRemoved> {
+class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, Observable<PDFWasRemoved> {
     override val subscribers: MutableList<Observer> = ArrayList()
     private val titleImageMaxSize = 50
     private val currentTitleImage = JImage(getCurrentTitleImagePreview())
