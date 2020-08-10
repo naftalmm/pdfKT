@@ -34,9 +34,9 @@ class App : JFrame(), Observer {
         })
         add(JButton("Save as PDF...").apply {
             alignmentX = Component.LEFT_ALIGNMENT
-            preferredSize = Dimension(40, 120)
-            val fc = JPDFFileChooser().apply { currentDirectory = fcCurrentDirectory }
+            preferredSize *= 2
             addActionListener {
+                val fc = JPDFFileChooser().apply { currentDirectory = fcCurrentDirectory }
                 if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
                     PDFTKSaver(pdfsList.getCurrentPDFsState()).saveTo(fc.selectedFile.toPath())
                 }
@@ -128,3 +128,5 @@ fun edt(runnable: () -> Unit) {
 }
 
 fun Container.addAll(components: Iterable<Component>) = components.forEach { add(it) }
+
+private operator fun Dimension.times(i: Int) = Dimension(this.width * i, this.height * i)
