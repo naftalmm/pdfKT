@@ -1,11 +1,26 @@
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 
 class PDFTKSaver(private val input: List<Pair<File, DocumentState>>) {
+    companion object {
+        private val pdftk by lazy { getPathToPDFTKFolder().resolve("pdftk") }
+
+        private fun getPathToPDFTKFolder(): Path {
+            val binFolder = Paths.get(PDFTKSaver::class.java.getResource("bin").toURI())
+            val tempDir = Files.createTempDirectory("pdftk").also { it.deleteOnExit() }
+            Files.walk(binFolder)
+                .filter { Files.isRegularFile(it) }
+                .forEach { input -> Files.copy(input, tempDir.resolve(input.fileName).also { it.deleteOnExit() }) }
+            return tempDir
+        }
+    }
+
     fun saveTo(output: Path) {
         val handles = getHandles(input.map { it.first })
         val pdftkInputFiles =
-            handles.map { (file, handle) -> "$handle=\"${file.absolutePath}\"" }.joinToString(separator = " ")
+            handles.map { (file, handle) -> "$handle=\"${file.absolutePath}\"" }.joinToString(" ")
 
         val pdftkCommand = input.flatMap { (file, state) ->
             getRanges(state).map { (range, rotation) ->
@@ -13,12 +28,9 @@ class PDFTKSaver(private val input: List<Pair<File, DocumentState>>) {
                 val rotationStr = if (rotation == Rotation.NORTH) "" else rotation.toString().toLowerCase()
                 "${handles[file]}$rangeStr$rotationStr"
             }
-        }.joinToString(
-            separator = " ",
-            prefix = "pdftk $pdftkInputFiles cat ",
-            postfix = " output \"${output.toAbsolutePath()}\""
-        )
-        println(pdftkCommand) //TODO
+        }.joinToString(" ", "$pdftk $pdftkInputFiles cat ", " output \"${output.toAbsolutePath()}\"")
+
+        Runtime.getRuntime().exec(pdftkCommand)
     }
 
     private fun getHandles(files: List<File>): Map<File, String> {

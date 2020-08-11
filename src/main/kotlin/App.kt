@@ -6,6 +6,7 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.io.File
+import java.nio.file.Path
 import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JFileChooser
@@ -130,3 +131,5 @@ fun edt(runnable: () -> Unit) {
 fun Container.addAll(components: Iterable<Component>) = components.forEach { add(it) }
 
 private operator fun Dimension.times(i: Int) = Dimension(this.width * i, this.height * i)
+
+fun Path.deleteOnExit() = this.toFile().deleteOnExit()
