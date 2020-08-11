@@ -27,14 +27,12 @@ class PDFTKSaver(private val input: List<Pair<File, DocumentState>>) {
     }
 
     private fun handlesGenerator() = sequence {
-        val aChar = 65.toChar()
-        val zChar = 90.toChar()
         var prefix = ""
-        var i = aChar
+        var i = 'A'
         while (true) {
-            if (i > zChar) {
-                prefix += aChar
-                i = aChar
+            if (i > 'Z') {
+                prefix += 'A'
+                i = 'A'
             }
             yield(prefix + i++)
         }
