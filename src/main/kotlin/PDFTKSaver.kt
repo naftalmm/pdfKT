@@ -1,4 +1,6 @@
 import java.io.File
+import java.net.URI
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -8,11 +10,29 @@ class PDFTKSaver(private val input: List<Pair<File, DocumentState>>) {
         private val pdftk by lazy { getPathToPDFTKFolder().resolve("pdftk") }
 
         private fun getPathToPDFTKFolder(): Path {
-            val binFolder = Paths.get(PDFTKSaver::class.java.getResource("bin").toURI())
             val tempDir = Files.createTempDirectory("pdftk").also { it.deleteOnExit() }
-            Files.walk(binFolder)
-                .filter { Files.isRegularFile(it) }
-                .forEach { input -> Files.copy(input, tempDir.resolve(input.fileName).also { it.deleteOnExit() }) }
+
+            val uri = PDFTKSaver::class.java.getResource("bin").toURI()
+            if (uri.scheme == "jar") {
+                val (jar, path) = uri.toString().split("!")
+                val binFolder = FileSystems.newFileSystem(URI.create(jar), emptyMap<String, Any>()).getPath(path)
+
+                Files.walk(binFolder)
+                    .filter { Files.isRegularFile(it) }
+                    .forEach { input ->
+                        val fileName = input.fileName.toString()
+                        PDFTKSaver::class.java.getResourceAsStream("bin/$fileName").use { fis ->
+                            Files.copy(fis, tempDir.resolve(fileName).also { it.deleteOnExit() })
+                        }
+                    }
+            } else {
+                val binFolder = Paths.get(uri)
+                Files.walk(binFolder)
+                    .filter { Files.isRegularFile(it) }
+                    .forEach { input -> Files.copy(input, tempDir.resolve(input.fileName).also { it.deleteOnExit() }) }
+            }
+
+
             return tempDir
         }
     }

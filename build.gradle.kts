@@ -1,16 +1,20 @@
 plugins {
     java
     kotlin("jvm") version "1.3.72"
+    id("edu.sc.seis.launch4j") version "2.4.6"
+//    id ("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
 group = "mm.naftal"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    jcenter()
     mavenCentral()
     exclusiveContent {
         forRepository {
             ivy {
+                isAllowInsecureProtocol = true
                 url = uri("http://anonsvn.icesoft.org/repo/maven2/releases/")
                 patternLayout {
                     setM2compatible(true)
@@ -33,9 +37,8 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
-    testImplementation("org.openjdk.jmh:jmh-core:1.21")
-    testAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.21")
-//    testImplementation("junit", "junit", "4.12")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.2")
+    testImplementation("org.assertj", "assertj-swing-junit", "3.9.2")
 }
 
 configure<JavaPluginConvention> {
@@ -49,4 +52,22 @@ tasks {
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
     }
+    test {
+        useJUnitPlatform()
+    }
+    jar {
+        manifest {
+            attributes(
+                "Main-Class" to "AppKt"
+            )
+        }
+
+        from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it)})
+    }
+}
+
+launch4j {
+    mainClassName = "AppKt"
+    downloadUrl = "https://java.com/download"
+//    icon = "${projectDir}/icons/myApp.ico"
 }
