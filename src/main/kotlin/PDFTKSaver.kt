@@ -26,15 +26,11 @@ class PDFTKSaver(private val input: List<Pair<File, DocumentState>>) {
         return files.associateWith { handles.next() }
     }
 
-    private fun handlesGenerator() = sequence {
-        var prefix = ""
-        var i = 'A'
-        while (true) {
-            if (i > 'Z') {
-                prefix += 'A'
-                i = 'A'
-            }
-            yield(prefix + i++)
+    private fun handlesGenerator() = generateSequence("A") {
+        val prefix = it.substring(0, it.lastIndex)
+        when (val i = it.last()) {
+            'Z' -> prefix + "AA"
+            else -> prefix + (i + 1)
         }
     }
 
