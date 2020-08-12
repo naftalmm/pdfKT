@@ -66,6 +66,5 @@ tasks {
 launch4j {
     mainClassName = "AppKt"
     downloadUrl = "https://java.com/download"
-    headerType = "console"
 //    icon = "${projectDir}/icons/myApp.ico"
 }
