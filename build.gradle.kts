@@ -2,7 +2,6 @@ plugins {
     java
     kotlin("jvm") version "1.3.72"
     id("edu.sc.seis.launch4j") version "2.4.6"
-//    id ("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
 group = "mm.naftal"
@@ -57,17 +56,16 @@ tasks {
     }
     jar {
         manifest {
-            attributes(
-                "Main-Class" to "AppKt"
-            )
+            attributes("Main-Class" to "AppKt")
         }
 
-        from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it)})
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     }
 }
 
 launch4j {
     mainClassName = "AppKt"
     downloadUrl = "https://java.com/download"
+    headerType = "console"
 //    icon = "${projectDir}/icons/myApp.ico"
 }
