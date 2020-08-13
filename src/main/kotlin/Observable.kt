@@ -1,3 +1,4 @@
+import java.lang.ref.WeakReference
 import kotlin.reflect.KClass
 
 interface Observer {
@@ -32,30 +33,30 @@ object PenultPageWasSelected: ObservableEvent()
 
 interface AbstractObservable
 interface Observable<T : ObservableEvent> : AbstractObservable {
-    val subscribers: MutableList<Observer>
+    val subscribers: MutableList<WeakReference<Observer>>
 
     fun addObserver(observer: Observer) {
-        subscribers.add(observer)
+        subscribers.add(WeakReference(observer))
     }
 
-    fun notifySubscribers() = subscribers.forEach { it.update(getEvent()) }
+    fun notifySubscribers() = subscribers.forEach { it.get()?.update(getEvent()) }
     fun getEvent(): T
 }
 
 interface MultiObservable : AbstractObservable {
-    val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>>
-    val allEventsSubscribers: MutableList<Observer>
+    val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>>
+    val allEventsSubscribers: MutableList<WeakReference<Observer>>
 
     fun addObserver(event: KClass<out ObservableEvent>, observer: Observer) {
-        subscribers.getOrPut(event) { ArrayList() }.add(observer)
+        subscribers.getOrPut(event) { ArrayList() }.add(WeakReference(observer))
     }
 
     fun addAllEventsObserver(observer: Observer) {
-        allEventsSubscribers.add(observer)
+        allEventsSubscribers.add(WeakReference(observer))
     }
 
     fun notifySubscribers(event: ObservableEvent) {
-        allEventsSubscribers.forEach { it.update(event) }
-        subscribers[event::class]?.forEach { it.update(event) }
+        allEventsSubscribers.forEach { it.get()?.update(event) }
+        subscribers[event::class]?.forEach { it.get()?.update(event) }
     }
 }

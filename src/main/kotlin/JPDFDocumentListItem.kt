@@ -1,13 +1,14 @@
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Frame
+import java.lang.ref.WeakReference
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, Observable<PDFWasRemoved> {
-    override val subscribers: MutableList<Observer> = ArrayList()
+    override val subscribers: MutableList<WeakReference<Observer>> = ArrayList()
     private val titleImageMaxSize = 50
     private val currentTitleImage = JImage(getCurrentTitleImagePreview())
 

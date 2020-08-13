@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 const val IMAGES_THUMBNAILS_SIZE = 200
 
-class PDFDocument(val file: File) {
+class PDFDocument(val file: File) : AutoCloseable {
     val fileName: String = file.nameWithoutExtension
     val numberOfPages: Int
 
@@ -41,4 +41,6 @@ class PDFDocument(val file: File) {
 
     fun getPageImage(page: Int): Image =
         document.getPageImage(page, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f)
+
+    override fun close() = document.dispose()
 }

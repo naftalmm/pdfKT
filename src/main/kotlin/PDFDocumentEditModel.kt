@@ -1,6 +1,7 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.awt.Image
+import java.lang.ref.WeakReference
 import java.util.*
 import javax.swing.ImageIcon
 import kotlin.collections.ArrayList
@@ -32,8 +33,8 @@ class PDFDocumentEditModel(val pdf: PDFDocument) : MultiObservable {
         private val loadingImage = ImageIcon(PDFDocument::class.java.getResource("loading.gif")).image
     }
 
-    override val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<Observer>> = hashMapOf()
-    override val allEventsSubscribers: MutableList<Observer> = ArrayList()
+    override val subscribers: HashMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>> = hashMapOf()
+    override val allEventsSubscribers: MutableList<WeakReference<Observer>> = ArrayList()
     private val statesStack: LinkedList<DocumentState> = initStatesStack()
     val fileName = pdf.fileName
 
