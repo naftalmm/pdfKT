@@ -10,7 +10,6 @@ import kotlin.reflect.KClass
 class JPDFsList : JPanel(), MultiObservable, Observer {
     override val subscribers: HashMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>> = hashMapOf()
     override val allEventsSubscribers = ArrayList<WeakReference<Observer>>()
-    private val openedDocumentsUsages = CloseableObjectsUsage<PDFDocument>()
     private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()
     private val drag = object : MouseAdapter() {
         private lateinit var pressed: MouseEvent
@@ -47,29 +46,6 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
         }
     }
 
-    internal class CloseableObjectsUsage<O : AutoCloseable> {
-        private val objectToUsers: HashMap<O, MutableSet<Any>> = hashMapOf()
-        private val userToObject: HashMap<Any, MutableSet<O>> = hashMapOf()
-
-        fun register(user: Any, obj: O) {
-            objectToUsers.getOrPut(obj) { HashSet() }.add(user)
-            userToObject.getOrPut(user) { HashSet() }.add(obj)
-        }
-
-        fun deregister(user: Any) {
-            val objects = userToObject.remove(user) ?: return
-            for (obj in objects) {
-                val users = objectToUsers[obj] ?: continue
-                if (users.size == 1) {
-                    obj.close()
-                    objectToUsers.remove(obj)
-                } else {
-                    users.remove(user)
-                }
-            }
-        }
-    }
-
     init {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
     }
@@ -81,7 +57,7 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
             pdfDocumentsCache.putIfAbsent(file, WeakReference(pdfDocument))
 
             val pdf = JPDFDocumentListItem(PDFDocumentEditModel(pdfDocument)).apply { addMouseListener(drag) }
-            openedDocumentsUsages.register(pdf, pdfDocument)
+            CloseableObjectsUsage.register(pdf, pdfDocument)
             subscribeTo(pdf)
             edt {
                 add(pdf)
@@ -95,7 +71,7 @@ class JPDFsList : JPanel(), MultiObservable, Observer {
     }
 
     private fun removePDFDocument(doc: JPDFDocumentListItem) {
-        openedDocumentsUsages.deregister(doc)
+        CloseableObjectsUsage.deregister(doc)
         doc.decompose()
 
         edt {
