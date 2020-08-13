@@ -35,10 +35,8 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         defaultCloseOperation = DISPOSE_ON_CLOSE
         addWindowListener(object : WindowAdapter() {
             override fun windowClosed(e: WindowEvent) {
-                with(e.source as JPDFDocumentEditView) {
-                    scope.coroutineContext.cancelChildren()
-                    decompose()
-                }
+                scope.coroutineContext.cancelChildren()
+                decompose()
             }
         })
 

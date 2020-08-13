@@ -2,8 +2,9 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.EventQueue
+import java.awt.Window
 import java.nio.file.Path
-import javax.swing.JButton
+import javax.swing.AbstractButton
 
 fun edt(runnable: () -> Unit) {
     EventQueue.invokeLater(runnable)
@@ -17,11 +18,25 @@ fun Path.deleteOnExit() = this.toFile().deleteOnExit()
 
 fun Component.decompose() {
     if (this is Container) {
-        this.components.forEach { it.decompose() }
+        components.forEach { it.decompose() }
         removeAll()
-        this.keyListeners.forEach { removeKeyListener(it) }
-        if (this is JButton) {
-            this.actionListeners.forEach { removeActionListener(it) }
+        if (this is AbstractButton) {
+            actionListeners.forEach { removeActionListener(it) }
+            changeListeners.forEach { removeChangeListener(it) }
+            itemListeners.forEach { removeItemListener(it) }
         }
+        if (this is Window) {
+            windowListeners.forEach { removeWindowListener(it) }
+            windowFocusListeners.forEach { removeWindowFocusListener(it) }
+            windowStateListeners.forEach { removeWindowStateListener(it) }
+        }
+
+        containerListeners.forEach { removeContainerListener(it) }
     }
+    keyListeners.forEach { removeKeyListener(it) }
+    mouseListeners.forEach { removeMouseListener(it) }
+    mouseMotionListeners.forEach { removeMouseMotionListener(it) }
+    mouseWheelListeners.forEach { removeMouseWheelListener(it) }
+    componentListeners.forEach { removeComponentListener(it) }
+    focusListeners.forEach { removeFocusListener(it) }
 }
