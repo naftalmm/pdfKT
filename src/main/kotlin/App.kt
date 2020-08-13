@@ -35,7 +35,7 @@ class App : JFrame(), Observer {
             addActionListener {
                 val fc = JPDFFileChooser().apply { currentDirectory = fcCurrentDirectory }
                 if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                    PDFTK.cat(pdfsList.getCurrentPDFsState(), fc.selectedFile.toPath())
+                    PDFProcessor.cat(pdfsList.getCurrentPDFsState(), fc.selectedFile.toPath())
                 }
                 fcCurrentDirectory = fc.currentDirectory
             }
@@ -118,10 +118,4 @@ private fun createAndShowGUI() = edt {
     App()
 }
 
-fun main(args: Array<String>) {
-    if (args.isEmpty()) {
-        createAndShowGUI()
-    } else {
-        PDFTK.run(*args)
-    }
-}
+fun main(args: Array<String>) = createAndShowGUI()

@@ -36,6 +36,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
+    implementation("com.itextpdf:itext7-core:7.1.3")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.2")
     testImplementation("org.assertj", "assertj-swing-junit", "3.9.2")
 }
