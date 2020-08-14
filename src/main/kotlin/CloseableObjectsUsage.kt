@@ -1,6 +1,6 @@
 object CloseableObjectsUsage {
-    private val objectToUsers: HashMap<AutoCloseable, MutableSet<Any>> = hashMapOf()
-    private val userToObject: HashMap<Any, MutableSet<AutoCloseable>> = hashMapOf()
+    private val objectToUsers: MutableMap<AutoCloseable, MutableSet<Any>> = hashMapOf()
+    private val userToObject: MutableMap<Any, MutableSet<AutoCloseable>> = hashMapOf()
 
     fun register(user: Any, obj: AutoCloseable) {
         objectToUsers.getOrPut(obj) { HashSet() }.add(user)

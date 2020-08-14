@@ -39,6 +39,7 @@ dependencies {
     implementation("com.itextpdf:itext7-core:7.1.3")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.2")
     testImplementation("org.assertj", "assertj-swing-junit", "3.9.2")
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 }
 
 configure<JavaPluginConvention> {
