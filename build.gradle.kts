@@ -1,7 +1,10 @@
+import com.github.rholder.gradle.task.OneJar
+
 plugins {
     java
-    kotlin("jvm") version "1.3.72"
-    id("edu.sc.seis.launch4j") version "2.4.6"
+    kotlin("jvm") version "1.4.10"
+    id("edu.sc.seis.launch4j") version "2.4.8"
+    id("com.github.onslip.gradle-one-jar") version "1.0.5"
 }
 
 group = "mm.naftal"
@@ -33,7 +36,6 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
     implementation("com.itextpdf:itext7-core:7.1.3")
@@ -44,6 +46,13 @@ dependencies {
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
+//TODO register as default
+val onejar = tasks.register<OneJar>("onejar") {
+    group = "build"
+    mainClass = "AppKt" //TODO infer from jar manifest
+    targetConfiguration = configurations.runtimeClasspath.get() //TODO make default
 }
 
 tasks {
@@ -60,13 +69,21 @@ tasks {
         manifest {
             attributes("Main-Class" to "AppKt")
         }
-
-        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    }
+    //TODO delete after launch4j update
+    createExe {
+        jar = onejar.get().archiveFile.get().toString()
+        dependsOn(onejar)
     }
 }
 
 launch4j {
-    mainClassName = "AppKt"
-    downloadUrl = "https://java.com/download"
-//    icon = "${projectDir}/icons/myApp.ico"
+    copyConfigurable = emptySet<File>()
+    downloadUrl = "https://jdk.java.net/"
+    //    icon = "${projectDir}/icons/myApp.ico"
 }
+
+//TODO after launch4j update
+//launch4j {
+//    jarTask = onejar.get()
+//}
