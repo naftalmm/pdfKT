@@ -1,10 +1,9 @@
-import com.github.rholder.gradle.task.OneJar
-
 plugins {
     java
     kotlin("jvm") version "1.4.10"
     id("edu.sc.seis.launch4j") version "2.4.8"
-    id("com.github.onslip.gradle-one-jar") version "1.0.5"
+    id("my-gradle-one-jar")
+//    id("com.github.onslip.gradle-one-jar") version "1.0.5"
 }
 
 group = "mm.naftal"
@@ -23,9 +22,7 @@ repositories {
                     //http://anonsvn.icesoft.org/repo/maven2/releases/org/icepdf/os/icepdf-core/6.3.0/icepdf-core-6.3.0.jar
                     artifact("[organization]/[module]/[revision]/[artifact]-[revision].[ext]")
                     artifact("[organization]/[module]/[revision]/[artifact]-[revision]-[type].[ext]")
-                    metadataSources {
-                        artifact()
-                    }
+                    metadataSources { artifact() }
                 }
             }
         }
@@ -46,13 +43,6 @@ dependencies {
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
-//TODO register as default
-val onejar = tasks.register<OneJar>("onejar") {
-    group = "build"
-    mainClass = "AppKt" //TODO infer from jar manifest
-    targetConfiguration = configurations.runtimeClasspath.get() //TODO make default
 }
 
 tasks {
@@ -80,10 +70,6 @@ tasks {
 launch4j {
     copyConfigurable = emptySet<File>()
     downloadUrl = "https://jdk.java.net/"
+    jar = tasks.getByName("onejar").outputs.files.singleFile.toString() //TODO replace with "jarTask = tasks.onejar" after launch4j update
     //    icon = "${projectDir}/icons/myApp.ico"
 }
-
-//TODO after launch4j update
-//launch4j {
-//    jarTask = onejar.get()
-//}
