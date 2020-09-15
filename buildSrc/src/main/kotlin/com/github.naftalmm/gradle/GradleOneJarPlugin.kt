@@ -4,8 +4,6 @@ import com.github.naftalmm.gradle.task.OneJar
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.file.FileVisitor
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
@@ -41,8 +39,9 @@ import java.util.jar.JarFile
  */
 
 class GradleOneJarPlugin : Plugin<Project> {
-    private lateinit var oneJarStable : Configuration
-    private lateinit var oneJarRC : Configuration
+    private lateinit var oneJarStable: Configuration
+    private lateinit var oneJarRC: Configuration
+
     override fun apply(project: Project) {
         project.pluginManager.apply(JavaPlugin::class.java)
 
@@ -90,7 +89,7 @@ class GradleOneJarPlugin : Plugin<Project> {
     }
 
     private fun registerOneJarTask(project: Project, extension: GradleOneJarPluginExtension) {
-        project.tasks.register("onejar", OneJar::class.java) { oneJar ->
+        val oneJarTask = project.tasks.register("onejar", OneJar::class.java) { oneJar ->
             with(oneJar) {
                 group = "build"
 
@@ -100,8 +99,7 @@ class GradleOneJarPlugin : Plugin<Project> {
                 baseJar.set(extension.baseJar)
                 useStable.set(extension.useStable)
                 mergeManifestFromBaseJar.set(extension.mergeManifestFromBaseJar)
-                oneJarConfiguration.convention(if (useStable.get()) oneJarStable else oneJarRC)
-                extension.oneJarConfiguration.map { oneJarConfiguration.set(it) }
+                oneJarConfiguration.set(extension.oneJarConfiguration)
 
                 into("lib") {
                     it.from(depLibs)
@@ -116,35 +114,34 @@ class GradleOneJarPlugin : Plugin<Project> {
                     }
                 }
 
-                val oneJarBootContents = oneJarConfiguration.get().map { project.zipTree(it) }
+                doFirst {
+                    if (mergeManifestFromBaseJar.get()) {
+                        JarFile(baseJar.get().asFile).use {
+                            manifest.attributes(it.manifest.mainAttributes.mapKeys { (k, _) -> k.toString() })
+                        }
+                    }
+                }
+            }
+        }
+
+        project.afterEvaluate {
+            with(oneJarTask.get()) {
+                val oneJarConfiguration: Configuration = when {
+                    oneJarConfiguration.isPresent -> oneJarConfiguration.get()
+                    useStable.get() -> oneJarStable
+                    else -> oneJarRC
+                }
+                val oneJarBootContents = oneJarConfiguration.map { project.zipTree(it) }
                 from(oneJarBootContents) {
-                    if (oneJarConfiguration.get() == oneJarStable || oneJarConfiguration.get() == oneJarRC) {
+                    if (oneJarConfiguration == oneJarStable || oneJarConfiguration == oneJarRC) {
                         exclude("src/**")
                     }
                 }
 
-                manifest.apply {
-                    //generated manifest overrides the one from oneJarBoot, so they need to be merged with each other
-                    oneJarBootContents.forEach {
-                        it.visit(object : FileVisitor {
-                            override fun visitDir(dirDetails: FileVisitDetails) {}
-
-                            override fun visitFile(fileDetails: FileVisitDetails) {
-                                if (fileDetails.path == "META-INF/MANIFEST.MF") {
-                                    from(fileDetails.file)
-                                    fileDetails.stopVisiting()
-                                }
-                            }
-                        })
-                    }
-
-                    if (mergeManifestFromBaseJar.get()) {
-                        println("mergeManifestFromBaseJar")
-                        JarFile(baseJar.get().asFile).use {
-                            from(it.manifest.mainAttributes)
-                        }
-                    }
-                }
+                //generated manifest overrides the one from oneJarBoot, so they need to be merged with each other
+                manifest.from(oneJarBootContents.flatten().filter {
+                    it.isFile && it.name.endsWith("MANIFEST.MF")
+                })
             }
         }
     }
