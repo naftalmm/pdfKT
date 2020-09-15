@@ -32,15 +32,6 @@ open class OneJar : Jar() {
 
     @Input
     val mergeManifestFromBaseJar: Property<Boolean> = project.objects.property(Boolean::class.java)
-//
-//    @InputFile
-//    val manifestFile: RegularFileProperty = project.objects.fileProperty()
-//
-//    boolean showExpand = false ???
-//    boolean confirmExpand = false ???
-//
-//    @Input
-//    val mainClass: Property<String> = project.objects.property(String::class.java)
 
     init {
         description = "Create a One-JAR runnable archive from the current project using a given main Class."

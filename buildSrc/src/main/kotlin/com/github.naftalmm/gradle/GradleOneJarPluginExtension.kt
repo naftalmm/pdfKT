@@ -11,7 +11,7 @@ open class GradleOneJarPluginExtension(objects: ObjectFactory) {
     val binLibs: ConfigurableFileCollection = objects.fileCollection()
     val additionalFiles: ConfigurableFileCollection = objects.fileCollection()
     val baseJar: RegularFileProperty = objects.fileProperty()
+    val oneJarConfiguration: Property<Configuration> = objects.property(Configuration::class.java)
     val useStable: Property<Boolean> = objects.property(Boolean::class.java).convention(true)
     val mergeManifestFromBaseJar: Property<Boolean> = objects.property(Boolean::class.java).convention(false)
-    val oneJarConfiguration: Property<Configuration> = objects.property(Configuration::class.java)
 }
