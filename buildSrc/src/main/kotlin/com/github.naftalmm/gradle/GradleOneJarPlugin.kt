@@ -3,12 +3,14 @@ package com.github.naftalmm.gradle
 import com.github.naftalmm.gradle.task.OneJar
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileVisitDetails
 import org.gradle.api.file.FileVisitor
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.jvm.tasks.Jar
+import java.util.jar.JarFile
 
 /**
  * This plugin rolls up your current project's jar and all of its dependencies
@@ -39,10 +41,12 @@ import org.gradle.jvm.tasks.Jar
  */
 
 class GradleOneJarPlugin : Plugin<Project> {
+    private lateinit var oneJarStable : Configuration
+    private lateinit var oneJarRC : Configuration
     override fun apply(project: Project) {
         project.pluginManager.apply(JavaPlugin::class.java)
 
-        val extension = project.extensions.create("oneJar", GradleOneJarExtension::class.java).apply {
+        val extension = project.extensions.create("oneJar", GradleOneJarPluginExtension::class.java).apply {
             val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
             val runtimeClasspathConfigurationName =
                 javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).runtimeClasspathConfigurationName
@@ -66,7 +70,7 @@ class GradleOneJarPlugin : Plugin<Project> {
             }
         }
 
-        project.configurations.create("onejar").apply {
+        oneJarStable = project.configurations.create("onejar").apply {
             isVisible = false
             isTransitive = false
             description = "The oneJar boot stable configuration for this project"
@@ -75,7 +79,7 @@ class GradleOneJarPlugin : Plugin<Project> {
             }
         }
 
-        project.configurations.create("onejarRC").apply {
+        oneJarRC = project.configurations.create("onejarRC").apply {
             isVisible = false
             isTransitive = false
             description = "The oneJar boot RC configuration for this project"
@@ -85,7 +89,7 @@ class GradleOneJarPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerOneJarTask(project: Project, extension: GradleOneJarExtension) {
+    private fun registerOneJarTask(project: Project, extension: GradleOneJarPluginExtension) {
         project.tasks.register("onejar", OneJar::class.java) { oneJar ->
             with(oneJar) {
                 group = "build"
@@ -95,7 +99,9 @@ class GradleOneJarPlugin : Plugin<Project> {
                 additionalFiles.setFrom(extension.additionalFiles)
                 baseJar.set(extension.baseJar)
                 useStable.set(extension.useStable)
-                oneJarConfiguration.set(project.configurations.getByName(if (useStable.get()) "onejar" else "onejarRC"))
+                mergeManifestFromBaseJar.set(extension.mergeManifestFromBaseJar)
+                oneJarConfiguration.convention(if (useStable.get()) oneJarStable else oneJarRC)
+                extension.oneJarConfiguration.map { oneJarConfiguration.set(it) }
 
                 into("lib") {
                     it.from(depLibs)
@@ -111,10 +117,14 @@ class GradleOneJarPlugin : Plugin<Project> {
                 }
 
                 val oneJarBootContents = oneJarConfiguration.get().map { project.zipTree(it) }
-                from(oneJarBootContents)
+                from(oneJarBootContents) {
+                    if (oneJarConfiguration.get() == oneJarStable || oneJarConfiguration.get() == oneJarRC) {
+                        exclude("src/**")
+                    }
+                }
 
-                //generated manifest overrides the one from oneJarBoot, so they need to be merged with each other
                 manifest.apply {
+                    //generated manifest overrides the one from oneJarBoot, so they need to be merged with each other
                     oneJarBootContents.forEach {
                         it.visit(object : FileVisitor {
                             override fun visitDir(dirDetails: FileVisitDetails) {}
@@ -126,6 +136,13 @@ class GradleOneJarPlugin : Plugin<Project> {
                                 }
                             }
                         })
+                    }
+
+                    if (mergeManifestFromBaseJar.get()) {
+                        println("mergeManifestFromBaseJar")
+                        JarFile(baseJar.get().asFile).use {
+                            from(it.manifest.mainAttributes)
+                        }
                     }
                 }
             }

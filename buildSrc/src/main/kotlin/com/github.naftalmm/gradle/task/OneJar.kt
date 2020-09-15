@@ -30,8 +30,8 @@ open class OneJar : Jar() {
     @Optional
     val oneJarConfiguration: Property<Configuration> = project.objects.property(Configuration::class.java)
 
-//    @Input
-//    val mergeManifestFromJar: Property<Boolean> = project.objects.property(Boolean::class.java)
+    @Input
+    val mergeManifestFromBaseJar: Property<Boolean> = project.objects.property(Boolean::class.java)
 //
 //    @InputFile
 //    val manifestFile: RegularFileProperty = project.objects.fileProperty()
