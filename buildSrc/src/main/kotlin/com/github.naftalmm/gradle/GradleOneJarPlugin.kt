@@ -113,14 +113,6 @@ class GradleOneJarPlugin : Plugin<Project> {
                         rename { "main.jar" }
                     }
                 }
-
-                doFirst {
-                    if (mergeManifestFromBaseJar.get()) {
-                        JarFile(baseJar.get().asFile).use {
-                            manifest.attributes(it.manifest.mainAttributes.mapKeys { (k, _) -> k.toString() })
-                        }
-                    }
-                }
             }
         }
 
@@ -138,10 +130,30 @@ class GradleOneJarPlugin : Plugin<Project> {
                     }
                 }
 
-                //generated manifest overrides the one from oneJarBoot, so they need to be merged with each other
-                manifest.from(oneJarBootContents.flatten().filter {
+                //generated manifest of task overrides the one copied from oneJarBoot,
+                // so they need to be merged with each other
+                val oneJarBootManifest = oneJarBootContents.flatten().first {
                     it.isFile && it.name.endsWith("MANIFEST.MF")
-                })
+                }
+                manifest.from(oneJarBootManifest) { mergeSpec ->
+                    //attributes in onejar task manifest
+                    // takes precedence over the oneJarBoot ones
+                    mergeSpec.eachEntry {
+                        it.value = it.baseValue ?: it.mergeValue
+                    }
+                }
+
+                doFirst {
+                    if (mergeManifestFromBaseJar.get()) {
+                        JarFile(baseJar.get().asFile).use { baseJar ->
+                            manifest.attributes(baseJar.manifest.mainAttributes
+                                .mapKeys { (k, _) -> k.toString() }
+                                //attributes in onejar task manifest/oneJarBoot manifest
+                                //takes precedence over the ones from baseJar
+                                .filterKeys { !manifest.attributes.keys.contains(it) })
+                        }
+                    }
+                }
             }
         }
     }
