@@ -64,12 +64,13 @@ tasks {
     createExe {
         jar = onejar.get().archiveFile.get().toString()
         dependsOn(onejar)
+        outputs.upToDateWhen { !onejar.get().didWork }
     }
 }
 
 launch4j {
     copyConfigurable = emptySet<File>()
     downloadUrl = "https://jdk.java.net/"
-    jar = tasks.getByName("onejar").outputs.files.singleFile.toString() //TODO replace with "jarTask = tasks.onejar" after launch4j update
-    //    icon = "${projectDir}/icons/myApp.ico"
+//    jarTask = tasks.onejar //TODO uncomment after launch4j update
+//    icon = "${projectDir}/icons/myApp.ico"
 }

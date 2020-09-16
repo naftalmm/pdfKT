@@ -8,6 +8,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.jvm.tasks.Jar
+import java.io.File
 import java.util.jar.JarFile
 
 /**
@@ -98,8 +99,9 @@ class GradleOneJarPlugin : Plugin<Project> {
                 additionalFiles.setFrom(extension.additionalFiles)
                 baseJar.set(extension.baseJar)
                 useStable.set(extension.useStable)
-                mergeManifestFromBaseJar.set(extension.mergeManifestFromBaseJar)
+                silent.set(extension.silent)
                 oneJarConfiguration.set(extension.oneJarConfiguration)
+                mergeManifestFromBaseJar.set(extension.mergeManifestFromBaseJar)
 
                 into("lib") {
                     it.from(depLibs)
@@ -130,6 +132,10 @@ class GradleOneJarPlugin : Plugin<Project> {
                     }
                 }
 
+                if (silent.get() && !this.oneJarConfiguration.isPresent) {
+                    from(File(temporaryDir, "one-jar.properties").apply { writeText("one-jar.silent=true") })
+                }
+
                 //generated manifest of task overrides the one copied from oneJarBoot,
                 // so they need to be merged with each other
                 val oneJarBootManifest = oneJarBootContents.flatten().first {
@@ -150,7 +156,7 @@ class GradleOneJarPlugin : Plugin<Project> {
                                 .mapKeys { (k, _) -> k.toString() }
                                 //attributes in onejar task manifest/oneJarBoot manifest
                                 //takes precedence over the ones from baseJar
-                                .filterKeys { !manifest.attributes.keys.contains(it) })
+                                .filterKeys { !manifest.effectiveManifest.attributes.keys.contains(it) })
                         }
                     }
                 }

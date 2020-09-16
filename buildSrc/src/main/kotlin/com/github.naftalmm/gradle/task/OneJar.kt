@@ -27,6 +27,9 @@ open class OneJar : Jar() {
     val useStable: Property<Boolean> = project.objects.property(Boolean::class.java)
 
     @Input
+    val silent: Property<Boolean> = project.objects.property(Boolean::class.java)
+
+    @Input
     @Optional
     val oneJarConfiguration: Property<Configuration> = project.objects.property(Configuration::class.java)
 

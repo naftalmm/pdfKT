@@ -22,6 +22,7 @@ my-awesome-thing-1.2.3-standalone.jar
 +---- META-INF
 |   +---- MANIFEST.MF
 +---- OneJar.class
++---- one-jar.properties
 +---- .version
 ```
 
@@ -62,7 +63,7 @@ tasks {
 Then you can run the task with:
 
 ```bash
-gradle onejar
+gradlew onejar
 ```
 
 <!-- TODO rework -->
@@ -92,8 +93,9 @@ extending built-in [Jar](https://docs.gradle.org/current/dsl/org.gradle.api.task
  additionalFiles | [ConfigurableFileCollection](https://docs.gradle.org/current/javadoc/org/gradle/api/file/ConfigurableFileCollection.html) | Set of files to be packed additionaly in jar root | null
  baseJar | [RegularFileProperty](https://docs.gradle.org/current/javadoc/org/gradle/api/file/RegularFileProperty.html) | Jar to be packed as main.jar |`tasks.jar.archiveFile`
  useStable | Property<Boolean> | see [Selectable One-JAR version](#useStable), will be ignored if `oneJarConfiguration` property set | true |
+ silent | Property<Boolean> | prevent one-jar info logging, will be ignored if `oneJarConfiguration` property set | true |
  oneJarConfiguration | Property<Configuration> | see [Bring your own One-JAR version](#oneJarConfiguration) | |
- mergeManifestFromBaseJar | | false |
+ mergeManifestFromBaseJar | see [Merge baseJar MANIFEST.MF entries](#mergeManifestFromBaseJar) | false |
  
 Also, plugin registers one default task instance of this type (`onejar` in `build` group) 
 and adds a `onejar` plugin extension to redefine default values of additional properties for all tasks of this type.
@@ -189,9 +191,9 @@ They override ones from the manifest of one-jar-boot.jar (for matching attribute
 
 See also: [One-JAR manifest attributes](http://one-jar.sourceforge.net/index.php?page=details&file=manifest).
 
-### Merge base `Jar` task MANIFEST.MF entries
+### <a name="mergeManifestFromBaseJar">Merge baseJar MANIFEST.MF entries</a>
 If you just want all the MANIFEST.MF entries that are present in your
-baseJar to be merged with the entries defined in manidest of the final archive, then you can do so with:
+baseJar to be merged with the entries defined in manifest of the final archive, then you can do so with:
 
 ```kotlin
 tasks.onejar {
