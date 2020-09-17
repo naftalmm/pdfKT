@@ -66,16 +66,6 @@ Then you can run the task with:
 gradlew onejar
 ```
 
-<!-- TODO rework -->
-The end result will be a new build artifact with the `standalone` classifier
-that should be suitable for publishing to a repository, etc. via:
-
-```groovy
-artifacts {
-    archives onejar
-}
-```
-
 If you don't like the name of the final artifact, you can change it just like
 any other Gradle `Jar` task with:
 ```kotlin
@@ -93,7 +83,7 @@ extending built-in [Jar](https://docs.gradle.org/current/dsl/org.gradle.api.task
  additionalFiles | [ConfigurableFileCollection](https://docs.gradle.org/current/javadoc/org/gradle/api/file/ConfigurableFileCollection.html) | Set of files to be packed additionaly in jar root | null
  baseJar | [RegularFileProperty](https://docs.gradle.org/current/javadoc/org/gradle/api/file/RegularFileProperty.html) | Jar to be packed as main.jar |`tasks.jar.archiveFile`
  useStable | Property<Boolean> | see [Selectable One-JAR version](#useStable), will be ignored if `oneJarConfiguration` property set | true |
- silent | Property<Boolean> | prevent one-jar info logging, will be ignored if `oneJarConfiguration` property set | true |
+ silent | Property<Boolean> | see [(Almost) Silent one-jar](#silent), will be ignored if `oneJarConfiguration` property set | true |
  oneJarConfiguration | Property<Configuration> | see [Bring your own One-JAR version](#oneJarConfiguration) | |
  mergeManifestFromBaseJar | see [Merge baseJar MANIFEST.MF entries](#mergeManifestFromBaseJar) | false |
  
@@ -116,7 +106,7 @@ with the following:
 
 ```kotlin
 tasks.onejar {
-    useStable = false
+    useStable.set(false)
 }
 ```
 
@@ -187,7 +177,7 @@ tasks.onejar {
 }
 ```
 
-They override ones from the manifest of one-jar-boot.jar (for matching attribute names).
+They override ones from the manifest of `one-jar-boot.jar` (for matching attribute names).
 
 See also: [One-JAR manifest attributes](http://one-jar.sourceforge.net/index.php?page=details&file=manifest).
 
@@ -201,10 +191,10 @@ tasks.onejar {
 }
 ```
 
-They DO NOT override ones from the manifest of one-jar-boot.jar and from the OneJar task manifest (for matching attribute names).
+They DO NOT override ones from the manifest of `one-jar-boot.jar` and from the OneJar task manifest (for matching attribute names).
 
 The overall priority for an attribute values collision:
-OneJar task manifest > one-jar-boot.jar manifest > baseJar manifest
+OneJar task manifest > `one-jar-boot.jar` manifest > baseJar manifest
 
 ### Add native libraries
 Files added to the `/binlib` directory within an archive get expanded to a
@@ -221,7 +211,7 @@ tasks.onejar {
 ### Add any files to the root archive
 If you just want to be able to drop arbitrary files into the root of the
 generated archive, then you can specify a directory (which will also include its
-children) to be copied over the top of the the existing files with:
+children) to be copied over the top of the existing files with:
 
 ```kotlin
 tasks.onejar {
@@ -253,6 +243,30 @@ entry in the final One-JAR archive. However, it is possible to override this def
 ```kotlin
 tasks.onejar {
     baseJar.set(someOtherJarTask.archiveFile)
+}
+```
+
+### <a name="silent">(Almost) Silent one-jar</a>
+By default, `one-jar-boot.jar` (both stable and RC versions) makes logging with INFO level. 
+To mitigate this annoying logs, plugin by default (if `oneJarConfiguration` is not overridden) 
+includes a `one-jar.properties` file (with `one-jar.silent=true` setting) into the root of created one-jar.
+This eliminates almost all logs, except for the initial:
+```
+[Boot] INFO:  loading properties from one-jar.properties
+```
+(for stable version)
+
+```
+myJarPath=...
+oneJarPath=...
+```
+(for RC version)
+
+To return default logging level:
+                                       
+```kotlin
+tasks.onejar {
+   silent.set(false)
 }
 ```
 

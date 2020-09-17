@@ -103,6 +103,11 @@ class GradleOneJarPlugin : Plugin<Project> {
                 oneJarConfiguration.set(extension.oneJarConfiguration)
                 mergeManifestFromBaseJar.set(extension.mergeManifestFromBaseJar)
 
+                into("main") {
+                    it.from(baseJar).apply {
+                        rename { "main.jar" }
+                    }
+                }
                 into("lib") {
                     it.from(depLibs)
                 }
@@ -110,11 +115,6 @@ class GradleOneJarPlugin : Plugin<Project> {
                     it.from(binLibs)
                 }
                 from(additionalFiles)
-                into("main") {
-                    it.from(baseJar).apply {
-                        rename { "main.jar" }
-                    }
-                }
             }
         }
 

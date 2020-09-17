@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.4.10"
+    `java-gradle-plugin`
 }
 
 repositories {
@@ -12,5 +13,14 @@ tasks {
     }
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
+    }
+}
+
+gradlePlugin {
+    plugins {
+        create("gradle-one-jar") {
+            id = "my-gradle-one-jar"
+            implementationClass = "com.github.naftalmm.gradle.GradleOneJarPlugin"
+        }
     }
 }
