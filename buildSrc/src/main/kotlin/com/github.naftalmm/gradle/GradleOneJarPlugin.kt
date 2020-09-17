@@ -59,14 +59,21 @@ class GradleOneJarPlugin : Plugin<Project> {
     }
 
     private fun configureOneJarBootDependency(project: Project) {
-        project.repositories.ivy { ivy ->
-            ivy.url = project.uri("https://sourceforge.net/projects")
-            ivy.patternLayout { layout ->
-                //https://sourceforge.net/projects/one-jar/files/one-jar/0.98%20RCs/one-jar-0.98-RC2/one-jar-boot-0.98.jar
-                //https://sourceforge.net/projects/one-jar/files/one-jar/one-jar-0.97.1/one-jar-boot-0.97.jar
-                layout.artifact("[organization]/files/[organization]/0.98%20RCs/one-jar-0.98-RC2/[artifact]-[revision].[ext]")
-                layout.artifact("[organization]/files/[organization]/one-jar-0.97.1/[artifact]-[revision].[ext]")
-                ivy.metadataSources { it.artifact() }
+        project.repositories.exclusiveContent { exclusive ->
+            exclusive.forRepository {
+                project.repositories.ivy { ivy ->
+                    ivy.url = project.uri("https://sourceforge.net/projects")
+                    ivy.patternLayout { layout ->
+                        //https://sourceforge.net/projects/one-jar/files/one-jar/0.98%20RCs/one-jar-0.98-RC2/one-jar-boot-0.98.jar
+                        //https://sourceforge.net/projects/one-jar/files/one-jar/one-jar-0.97.1/one-jar-boot-0.97.jar
+                        layout.artifact("[organization]/files/[organization]/0.98%20RCs/one-jar-0.98-RC2/[artifact]-[revision].[ext]")
+                        layout.artifact("[organization]/files/[organization]/one-jar-0.97.1/[artifact]-[revision].[ext]")
+                        ivy.metadataSources { it.artifact() }
+                    }
+                }
+            }
+            exclusive.filter {
+                it.includeVersionByRegex("one-jar", "one-jar-boot", "0.97|0.98")
             }
         }
 
