@@ -71,6 +71,6 @@ tasks {
 launch4j {
     copyConfigurable = emptySet<File>()
     downloadUrl = "https://jdk.java.net/"
-//    jarTask = tasks.onejar //TODO uncomment after launch4j update
+//    jarTask = tasks.onejar.get() //TODO uncomment after launch4j update
 //    icon = "${projectDir}/icons/myApp.ico"
 }
