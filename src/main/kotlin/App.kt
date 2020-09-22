@@ -118,4 +118,4 @@ private fun createAndShowGUI() = edt {
     App()
 }
 
-fun main(args: Array<String>) = createAndShowGUI()
+fun main() = createAndShowGUI()

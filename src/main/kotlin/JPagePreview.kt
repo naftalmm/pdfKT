@@ -1,4 +1,5 @@
-import java.awt.event.InputEvent
+import java.awt.event.InputEvent.CTRL_DOWN_MASK
+import java.awt.event.InputEvent.SHIFT_DOWN_MASK
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.BoxLayout
@@ -11,15 +12,8 @@ class JPagePreview(val pageIndex: Int, thumbnail: JImage, selectionsManager: Sel
         add(thumbnail)
         add(JLabel((pageIndex + 1).toString()))
         addMouseListener(object : MouseAdapter() {
-            fun MouseEvent.isCtrlClick(): Boolean {
-                val ctrlClick = InputEvent.BUTTON1_MASK or InputEvent.CTRL_MASK
-                return modifiers and ctrlClick == ctrlClick
-            }
-
-            fun MouseEvent.isShiftClick(): Boolean {
-                val shiftClick = InputEvent.BUTTON1_MASK or InputEvent.SHIFT_MASK
-                return modifiers and shiftClick == shiftClick
-            }
+            fun MouseEvent.isCtrlClick() = button == 1 && modifiersEx == CTRL_DOWN_MASK
+            fun MouseEvent.isShiftClick() = button == 1 && modifiersEx == SHIFT_DOWN_MASK
 
             override fun mouseClicked(e: MouseEvent) = with(e) {
                 when {
