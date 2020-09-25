@@ -37,6 +37,7 @@ import java.util.jar.JarFile
  * +---- OneJar.class
  * +---- .version
  *
+ * </pre>
  */
 
 class GradleOneJarPlugin : Plugin<Project> {
