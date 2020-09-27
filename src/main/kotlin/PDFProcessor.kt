@@ -13,7 +13,7 @@ object PDFProcessor {
                         val page = `in`.getPage(pageIndex + 1)
                         page.rotation = (page.rotation + rotation.angle) % 360
                     }
-                    `in`.copyPagesTo(state.pages.keys.map { it + 1  }, out)
+                    `in`.copyPagesTo(state.pages.keys.map { it + 1 }, out)
                 }
             }
         }
