@@ -1,12 +1,15 @@
 import org.assertj.swing.core.ComponentDragAndDrop
+import org.assertj.swing.core.ComponentFinder
 import org.assertj.swing.core.KeyPressInfo.keyCode
 import org.assertj.swing.core.matcher.JButtonMatcher
 import org.assertj.swing.core.matcher.JLabelMatcher
 import org.assertj.swing.edt.FailOnThreadViolationRepaintManager
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.fixture.FrameFixture
+import org.assertj.swing.fixture.JPanelFixture
 import org.bouncycastle.util.test.SimpleTest
 import org.junit.jupiter.api.*
+import java.awt.Color
 import java.awt.Point
 import java.awt.event.InputEvent.CTRL_MASK
 import java.awt.event.KeyEvent.VK_O
@@ -14,6 +17,8 @@ import java.io.File
 import java.net.URLDecoder
 import java.nio.file.Files
 import java.util.concurrent.Callable
+import javax.swing.border.EmptyBorder
+import javax.swing.border.LineBorder
 
 
 class PDFKTApplicationTest {
@@ -44,8 +49,10 @@ class PDFKTApplicationTest {
         window.resizeTo(size) //restore original size
 
         dnd = ComponentDragAndDrop(window.robot())
+    }
 
-        tempDir = createTempDir(prefix = "pdfKT_test").also { it.deleteOnExit() } //TODO create only for certain tests
+    private fun renewTempDir() {
+        tempDir = createTempDir(prefix = "pdfKT_test").also { it.deleteOnExit() }
     }
 
     @Test
@@ -78,6 +85,8 @@ class PDFKTApplicationTest {
 
     @Test
     fun shouldMergeInListOrder() {
+        renewTempDir()
+
         addPDF("1")
         addPDF("2")
         assertFileContentsEquals(getTestResource("12.pdf"), saveToTempDirAs("12.pdf"))
@@ -87,6 +96,17 @@ class PDFKTApplicationTest {
         dnd.drag(label2, Point(label2.x, label2.y))
         dnd.drop(label2, Point(0, 0))
         assertFileContentsEquals(getTestResource("21.pdf"), saveToTempDirAs("21.pdf"))
+    }
+
+    @Test
+    fun shouldSelectPageOnClick() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        val pagePreviews = window.dialog().robot().finder().findAllOfType<JPagePreview>()
+        with(JPanelFixture(window.robot(), pagePreviews[0])) {
+            click()
+            requireSelected()
+        }
     }
 
     private fun saveToTempDirAs(name: String): File {
@@ -109,9 +129,17 @@ class PDFKTApplicationTest {
     }
 }
 
+inline fun <reified T> ComponentFinder.findAllOfType(): List<T> = findAll { it is T }.map { it as T }
+
+fun JPanelFixture.requireSelected(): Boolean {
+    val border = target().border
+    return border is LineBorder && border.lineColor == Color.BLUE
+}
+
+fun JPanelFixture.requireNotSelected() = target().border is EmptyBorder
+
 private fun getTestResource(name: String): File =
     File(URLDecoder.decode(SimpleTest::class.java.getResource("/$name").file, "UTF-8"))
-
 
 fun assertFileContentsEquals(expected: File, actual: File): Boolean {
     val expectedSize: Long = Files.size(expected.toPath())
