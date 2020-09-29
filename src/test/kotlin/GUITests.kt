@@ -1,3 +1,4 @@
+import org.assertj.core.api.Assertions.assertThat
 import org.assertj.swing.core.ComponentDragAndDrop
 import org.assertj.swing.core.ComponentFinder
 import org.assertj.swing.core.KeyPressInfo.keyCode
@@ -5,17 +6,23 @@ import org.assertj.swing.core.Robot
 import org.assertj.swing.core.matcher.JButtonMatcher
 import org.assertj.swing.core.matcher.JLabelMatcher
 import org.assertj.swing.driver.ComponentDriver
+import org.assertj.swing.driver.ComponentDriver.propertyName
 import org.assertj.swing.edt.FailOnThreadViolationRepaintManager
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.fixture.AbstractComponentFixture
 import org.assertj.swing.fixture.FrameFixture
 import org.assertj.swing.fixture.JPanelFixture
-import org.bouncycastle.util.test.SimpleTest
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.InputEvent.CTRL_MASK
+import java.awt.event.KeyEvent.VK_CONTROL
 import java.awt.event.KeyEvent.VK_O
 import java.io.File
 import java.net.URLDecoder
@@ -76,10 +83,10 @@ class PDFKTApplicationTest {
         addPDF("1")
         addPDF("2")
         val pdfsList = window.robot().finder().findByType<JPDFsList>()
-        Assertions.assertEquals("1", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
+        assertEquals("1", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
 
         window.label(JLabelMatcher.withText("2")).dragAndDropTo(Point(0, 0))
-        Assertions.assertEquals("2", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
+        assertEquals("2", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
     }
 
     @Test
@@ -100,10 +107,37 @@ class PDFKTApplicationTest {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         val pagePreviews = window.dialog().robot().finder().findAllOfType<JPagePreview>()
-        with(JPanelFixture(window.robot(), pagePreviews[0])) {
+            .map { JPanelFixture(window.robot(), it) }
+        with(pagePreviews[0]) {
+            requireNotSelected()
             click()
             requireSelected()
         }
+        assertEquals(1, pagePreviews.count { it.isSelected() })
+    }
+
+    @Test
+    fun shouldAddToSelectedPagesOnCtrlClickOnNotSelectedPage() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        val pagePreviews = window.dialog().robot().finder().findAllOfType<JPagePreview>()
+            .map { JPanelFixture(window.robot(), it) }
+        pagePreviews[0].click().requireSelected()
+        pagePreviews[1].ctrlClick()
+
+        pagePreviews[0].requireSelected()
+        pagePreviews[1].requireSelected()
+        assertEquals(2, pagePreviews.count { it.isSelected() })
+    }
+
+    @Test
+    fun shouldRemoveFromSelectedPagesOnCtrlClickOnSelectedPage() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        val pagePreviews = window.dialog().robot().finder().findAllOfType<JPagePreview>()
+            .map { JPanelFixture(window.robot(), it) }
+        pagePreviews[0].click().requireSelected()
+        pagePreviews[0].ctrlClick().requireNotSelected()
     }
 
     @Suppress("DEPRECATION")
@@ -134,6 +168,13 @@ private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, 
     dnd.drop(target, where)
 }
 
+private inline fun <reified S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.ctrlClick(): S {
+    pressKey(VK_CONTROL)
+    click()
+    releaseKey(VK_CONTROL)
+    return S::class.java.cast(this);
+}
+
 val Robot.dnd: ComponentDragAndDrop by ComponentDragAndDropDelegate()
 
 class ComponentDragAndDropDelegate {
@@ -150,15 +191,25 @@ class ComponentDragAndDropDelegate {
 inline fun <reified T> ComponentFinder.findAllOfType(): List<T> = findAll { it is T }.map { it as T }
 inline fun <reified T: Component> ComponentFinder.findByType(): T = findByType(T::class.java)
 
-fun JPanelFixture.requireSelected(): Boolean {
+fun JPanelFixture.isSelected(): Boolean {
     val border = target().border
     return border is LineBorder && border.lineColor == Color.BLUE
 }
 
-fun JPanelFixture.requireNotSelected() = target().border is EmptyBorder
+fun JPanelFixture.requireSelected(): JPanelFixture {
+    assertThat(isSelected()).`as`(propertyName(target(), "selected")).isTrue
+    return this
+}
+
+fun JPanelFixture.isNotSelected() = target().border is EmptyBorder
+
+fun JPanelFixture.requireNotSelected(): JPanelFixture {
+    assertThat(isNotSelected()).`as`(propertyName(target(), "selected")).isTrue
+    return this
+}
 
 private fun getTestResource(name: String): File =
-    File(URLDecoder.decode(SimpleTest::class.java.getResource("/$name").file, "UTF-8"))
+    File(URLDecoder.decode(PDFKTApplicationTest::class.java.getResource("/$name").file, "UTF-8"))
 
 fun assertFileContentsEquals(expected: File, actual: File): Boolean {
     val expectedSize: Long = Files.size(expected.toPath())
