@@ -28,6 +28,7 @@ import java.io.File
 import java.net.URLDecoder
 import java.nio.file.Files
 import java.util.concurrent.Callable
+import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 import javax.swing.border.LineBorder
 import kotlin.reflect.KProperty
@@ -82,7 +83,7 @@ class PDFKTApplicationTest {
     fun shouldSupportDnDRearrangeItems() {
         addPDF("1")
         addPDF("2")
-        val pdfsList = window.robot().finder().findByType<JPDFsList>()
+        val pdfsList = window.finder().findByType<JPDFsList>()
         assertEquals("1", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
 
         window.label(JLabelMatcher.withText("2")).dragAndDropTo(Point(0, 0))
@@ -106,8 +107,7 @@ class PDFKTApplicationTest {
     fun shouldSelectPageOnClick() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        val pagePreviews = window.dialog().robot().finder().findAllOfType<JPagePreview>()
-            .map { JPanelFixture(window.robot(), it) }
+        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
         with(pagePreviews[0]) {
             requireNotSelected()
             click()
@@ -120,8 +120,7 @@ class PDFKTApplicationTest {
     fun shouldAddToSelectedPagesOnCtrlClickOnNotSelectedPage() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        val pagePreviews = window.dialog().robot().finder().findAllOfType<JPagePreview>()
-            .map { JPanelFixture(window.robot(), it) }
+        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
         pagePreviews[0].click().requireSelected()
         pagePreviews[1].ctrlClick()
 
@@ -134,8 +133,7 @@ class PDFKTApplicationTest {
     fun shouldRemoveFromSelectedPagesOnCtrlClickOnSelectedPage() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        val pagePreviews = window.dialog().robot().finder().findAllOfType<JPagePreview>()
-            .map { JPanelFixture(window.robot(), it) }
+        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
         pagePreviews[0].click().requireSelected()
         pagePreviews[0].ctrlClick().requireNotSelected()
     }
@@ -159,6 +157,8 @@ class PDFKTApplicationTest {
         }
         return result
     }
+
+    private fun JPanel.toFixture(): JPanelFixture = JPanelFixture(window.robot(), this)
 }
 
 private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.dragAndDropTo(where: Point) {
@@ -167,6 +167,9 @@ private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, 
     dnd.drag(target, Point(target.x, target.y))
     dnd.drop(target, where)
 }
+
+private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.finder() : ComponentFinder =
+    robot().finder()
 
 private inline fun <reified S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.ctrlClick(): S {
     pressKey(VK_CONTROL)
