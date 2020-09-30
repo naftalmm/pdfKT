@@ -1,6 +1,7 @@
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.swing.core.ComponentDragAndDrop
 import org.assertj.swing.core.ComponentFinder
+import org.assertj.swing.core.KeyPressInfo
 import org.assertj.swing.core.KeyPressInfo.keyCode
 import org.assertj.swing.core.Robot
 import org.assertj.swing.core.matcher.JButtonMatcher
@@ -15,6 +16,7 @@ import org.assertj.swing.fixture.JPanelFixture
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,8 +24,10 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.InputEvent.CTRL_MASK
+import java.awt.event.KeyEvent.VK_A
 import java.awt.event.KeyEvent.VK_CONTROL
 import java.awt.event.KeyEvent.VK_O
+import java.awt.event.KeyEvent.VK_SHIFT
 import java.io.File
 import java.net.URLDecoder
 import java.nio.file.Files
@@ -38,6 +42,12 @@ class PDFKTApplicationTest {
     private lateinit var tempDir: File
 
     companion object {
+        @Suppress("DEPRECATION")
+        private val ctrlA: KeyPressInfo = keyCode(VK_A).modifiers(CTRL_MASK)
+
+        @Suppress("DEPRECATION")
+        private val ctrlO: KeyPressInfo = keyCode(VK_O).modifiers(CTRL_MASK)
+
         @JvmStatic
         @BeforeAll
         fun setUpOnce() {
@@ -138,10 +148,37 @@ class PDFKTApplicationTest {
         pagePreviews[0].ctrlClick().requireNotSelected()
     }
 
-    @Suppress("DEPRECATION")
+    @Test
+    fun shouldSelectRangeOnShiftClick() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+        pagePreviews[2].click().requireSelected()
+        pagePreviews[1].shiftClick()
+
+        pagePreviews[2].requireSelected()
+        pagePreviews[1].requireSelected()
+        assertEquals(2, pagePreviews.count { it.isSelected() })
+
+        pagePreviews[0].shiftClick()
+        assertTrue(pagePreviews.all { it.isSelected() })
+
+        //repeated shift+click doesn't remove selection
+        pagePreviews[0].shiftClick()
+        assertTrue(pagePreviews.all { it.isSelected() })
+    }
+
+    @Test
+    fun shouldSelectAllOnCtrlA() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        window.dialog().pressAndReleaseKey(ctrlA)
+        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+        assertTrue(pagePreviews.all { it.isSelected() })
+    }
+
     private fun addPDF(name: String) {
-        window.pressAndReleaseKey(keyCode(VK_O).modifiers(CTRL_MASK))
-            .fileChooser().selectFile(getTestResource("$name.pdf")).approve()
+        window.pressAndReleaseKey(ctrlO).fileChooser().selectFile(getTestResource("$name.pdf")).approve()
     }
 
     private fun renewTempDir() {
@@ -168,13 +205,20 @@ private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, 
     dnd.drop(target, where)
 }
 
-private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.finder() : ComponentFinder =
+private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.finder(): ComponentFinder =
     robot().finder()
 
 private inline fun <reified S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.ctrlClick(): S {
     pressKey(VK_CONTROL)
     click()
     releaseKey(VK_CONTROL)
+    return S::class.java.cast(this);
+}
+
+private inline fun <reified S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.shiftClick(): S {
+    pressKey(VK_SHIFT)
+    click()
+    releaseKey(VK_SHIFT)
     return S::class.java.cast(this);
 }
 
@@ -192,7 +236,7 @@ class ComponentDragAndDropDelegate {
 }
 
 inline fun <reified T> ComponentFinder.findAllOfType(): List<T> = findAll { it is T }.map { it as T }
-inline fun <reified T: Component> ComponentFinder.findByType(): T = findByType(T::class.java)
+inline fun <reified T : Component> ComponentFinder.findByType(): T = findByType(T::class.java)
 
 fun JPanelFixture.isSelected(): Boolean {
     val border = target().border
