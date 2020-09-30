@@ -177,6 +177,42 @@ class PDFKTApplicationTest {
         assertTrue(pagePreviews.all { it.isSelected() })
     }
 
+    @Test
+    fun shouldNotAllowRotationWhenNoPagesAreSelected() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            assertTrue(finder().findAllOfType<JPagePreview>().map { it.toFixture() }.all { it.isNotSelected() })
+            button(JButtonMatcher.withText("Rotate clockwise")).requireDisabled()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).requireDisabled()
+        }
+    }
+
+    @Test
+    fun shouldNotAllowDeletionWhenNoPagesAreSelected() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            assertTrue(finder().findAllOfType<JPagePreview>().map { it.toFixture() }.all { it.isNotSelected() })
+            button(JButtonMatcher.withText("Remove selected")).requireDisabled()
+        }
+    }
+
+    @Test
+    fun shouldNotAllowDeleteAllPages() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            val removeSelectedBtn = button(JButtonMatcher.withText("Remove selected"))
+            val pagePreviews = finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+            pagePreviews[0].click()
+            removeSelectedBtn.requireEnabled()
+
+            pressAndReleaseKey(ctrlA)
+            removeSelectedBtn.requireDisabled()
+        }
+    }
+
     private fun addPDF(name: String) {
         window.pressAndReleaseKey(ctrlO).fileChooser().selectFile(getTestResource("$name.pdf")).approve()
     }
