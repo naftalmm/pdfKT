@@ -568,8 +568,36 @@ class PDFKTApplicationTest {
     fun `should show additional dialog on saving to existing file`() {
         renewTempDir()
         addPDF("1")
-        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
-        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf", true))
+        val savedFile = saveToTempDirAs("1.pdf")
+        assertFileContentsEquals(getTestResource("1.pdf"), savedFile)
+
+        addPDF("2")
+        /* Press 'Cancel' in overwrite existing file dialog */
+        window.button(JButtonMatcher.withText("Save as PDF...")).click()
+        with(window.fileChooser()) {
+            fileNameTextBox().setText(savedFile.absolutePath)
+            approve()
+            window.optionPane().cancelButton().click()
+            assertFileContentsEquals(getTestResource("1.pdf"), savedFile)
+        }
+
+        /* Press 'No' in overwrite existing file dialog */
+        window.button(JButtonMatcher.withText("Save as PDF...")).click()
+        with(window.fileChooser()) {
+            fileNameTextBox().setText(savedFile.absolutePath)
+            approve()
+            window.optionPane().noButton().click()
+            assertFileContentsEquals(getTestResource("1.pdf"), savedFile)
+        }
+
+        /* Press 'Yes' in overwrite existing file dialog */
+        window.button(JButtonMatcher.withText("Save as PDF...")).click()
+        with(window.fileChooser()) {
+            fileNameTextBox().setText(savedFile.absolutePath)
+            approve()
+            window.optionPane().yesButton().click()
+            assertFileContentsEquals(getTestResource("12.pdf"), savedFile)
+        }
     }
 
     private fun addPDF(name: String) {
@@ -580,15 +608,12 @@ class PDFKTApplicationTest {
         tempDir = createTempDir(prefix = "pdfKT_test").also { it.deleteOnExit() }
     }
 
-    private fun saveToTempDirAs(name: String, replaceExisting: Boolean = false): File {
+    private fun saveToTempDirAs(name: String): File {
         window.button(JButtonMatcher.withText("Save as PDF...")).click()
         val result = tempDir.resolve(name)
         with(window.fileChooser()) {
             fileNameTextBox().setText(result.absolutePath)
             approve()
-            if (replaceExisting) {
-                window.optionPane().yesButton().click()
-            }
         }
         return result
     }
