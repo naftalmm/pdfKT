@@ -213,6 +213,189 @@ class PDFKTApplicationTest {
         }
     }
 
+    @Test
+    fun shouldDeleteSelectedPages() {
+        renewTempDir()
+
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            val pagePreviews = finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+            pagePreviews[2].click()
+            button(JButtonMatcher.withText("Remove selected")).click()
+
+            assertEquals(2, finder().findAllOfType<JPagePreview>().size)
+
+            close()
+        }
+
+        assertFileContentsEquals(getTestResource("12.pdf"), saveToTempDirAs("12.pdf"))
+    }
+
+    @Test
+    fun shouldRotateSelectedPagesClockwise() {
+        renewTempDir()
+        addPDF("1")
+
+        /*rotate by 90 degrees*/
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_90.pdf"),
+            saveToTempDirAs("1_rotated_clockwise_90.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_180.pdf"),
+            saveToTempDirAs("1_rotated_clockwise_180.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_270.pdf"),
+            saveToTempDirAs("1_rotated_clockwise_270.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
+
+        /*rotate by 180 degrees*/
+        renewTempDir()
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate clockwise")).click().click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_180.pdf"),
+            saveToTempDirAs("1_rotated_clockwise_180.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate clockwise")).click().click()
+            close()
+        }
+        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
+
+        /*rotate by 360 + 90 degrees */
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate clockwise")).click().click().click().click().click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_90.pdf"),
+            saveToTempDirAs("1_rotated_clockwise_90.pdf")
+        )
+    }
+
+    @Test
+    fun shouldRotateSelectedPagesCounterClockwise() {
+        renewTempDir()
+        addPDF("1")
+
+        /*rotate by 90 degrees*/
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_270.pdf"),
+            saveToTempDirAs("1_rotated_counter-clockwise_90.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_180.pdf"),
+            saveToTempDirAs("1_rotated_counter-clockwise_180.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_90.pdf"),
+            saveToTempDirAs("1_rotated_counter-clockwise_270.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
+            close()
+        }
+        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
+
+        /*rotate by 180 degrees*/
+        renewTempDir()
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).click().click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_180.pdf"),
+            saveToTempDirAs("1_rotated_counter-clockwise_180.pdf")
+        )
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).click().click()
+            close()
+        }
+        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
+
+        /*rotate by 360 + 90 degrees */
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder().findByType<JPagePreview>().toFixture().click()
+            button(JButtonMatcher.withText("Rotate counter-clockwise")).click().click().click().click().click()
+            close()
+        }
+        assertFileContentsEquals(
+            getTestResource("1_rotated_clockwise_270.pdf"),
+            saveToTempDirAs("1_rotated_counter-clockwise_90.pdf")
+        )
+    }
+
     private fun addPDF(name: String) {
         window.pressAndReleaseKey(ctrlO).fileChooser().selectFile(getTestResource("$name.pdf")).approve()
     }
