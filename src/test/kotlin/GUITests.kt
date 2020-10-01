@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Component
+import java.awt.Container
 import java.awt.Point
 import java.awt.event.InputEvent.CTRL_MASK
 import java.awt.event.KeyEvent.VK_A
@@ -39,6 +40,7 @@ import kotlin.reflect.KProperty
 
 class PDFKTApplicationTest {
     private lateinit var window: FrameFixture
+    private lateinit var finder: ComponentFinder
     private lateinit var tempDir: File
 
     companion object {
@@ -69,6 +71,7 @@ class PDFKTApplicationTest {
             show() // shows the frame to test
             resizeTo(size) //restore original size
         }
+        finder = window.robot().finder()
     }
 
     @AfterEach
@@ -93,7 +96,7 @@ class PDFKTApplicationTest {
     fun shouldSupportDnDRearrangeItems() {
         addPDF("1")
         addPDF("2")
-        val pdfsList = window.finder().findByType<JPDFsList>()
+        val pdfsList = finder.findByType<JPDFsList>()
         assertEquals("1", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
 
         window.label(JLabelMatcher.withText("2")).dragAndDropTo(Point(0, 0))
@@ -117,7 +120,7 @@ class PDFKTApplicationTest {
     fun shouldSelectPageOnClick() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+        val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
         with(pagePreviews[0]) {
             requireNotSelected()
             click()
@@ -130,7 +133,7 @@ class PDFKTApplicationTest {
     fun shouldAddToSelectedPagesOnCtrlClickOnNotSelectedPage() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+        val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
         pagePreviews[0].click().requireSelected()
         pagePreviews[1].ctrlClick()
 
@@ -143,7 +146,7 @@ class PDFKTApplicationTest {
     fun shouldRemoveFromSelectedPagesOnCtrlClickOnSelectedPage() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+        val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
         pagePreviews[0].click().requireSelected()
         pagePreviews[0].ctrlClick().requireNotSelected()
     }
@@ -152,7 +155,7 @@ class PDFKTApplicationTest {
     fun shouldSelectRangeOnShiftClick() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+        val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
         pagePreviews[2].click().requireSelected()
         pagePreviews[1].shiftClick()
 
@@ -172,9 +175,11 @@ class PDFKTApplicationTest {
     fun shouldSelectAllOnCtrlA() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
-        window.dialog().pressAndReleaseKey(ctrlA)
-        val pagePreviews = window.dialog().finder().findAllOfType<JPagePreview>().map { it.toFixture() }
-        assertTrue(pagePreviews.all { it.isSelected() })
+        with(window.dialog()) {
+            pressAndReleaseKey(ctrlA)
+            val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
+            assertTrue(pagePreviews.all { it.isSelected() })
+        }
     }
 
     @Test
@@ -182,7 +187,7 @@ class PDFKTApplicationTest {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            assertTrue(finder().findAllOfType<JPagePreview>().map { it.toFixture() }.all { it.isNotSelected() })
+            assertTrue(finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }.all { it.isNotSelected() })
             button(JButtonMatcher.withText("Rotate clockwise")).requireDisabled()
             button(JButtonMatcher.withText("Rotate counter-clockwise")).requireDisabled()
         }
@@ -193,7 +198,7 @@ class PDFKTApplicationTest {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            assertTrue(finder().findAllOfType<JPagePreview>().map { it.toFixture() }.all { it.isNotSelected() })
+            assertTrue(finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }.all { it.isNotSelected() })
             button(JButtonMatcher.withText("Remove selected")).requireDisabled()
         }
     }
@@ -204,7 +209,7 @@ class PDFKTApplicationTest {
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
             val removeSelectedBtn = button(JButtonMatcher.withText("Remove selected"))
-            val pagePreviews = finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+            val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
             pagePreviews[0].click()
             removeSelectedBtn.requireEnabled()
 
@@ -220,11 +225,11 @@ class PDFKTApplicationTest {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            val pagePreviews = finder().findAllOfType<JPagePreview>().map { it.toFixture() }
+            val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
             pagePreviews[2].click()
             button(JButtonMatcher.withText("Remove selected")).click()
 
-            assertEquals(2, finder().findAllOfType<JPagePreview>().size)
+            assertEquals(2, finder.findAllOfType<JPagePreview>(target()).size)
 
             close()
         }
@@ -240,7 +245,7 @@ class PDFKTApplicationTest {
         /*rotate by 90 degrees*/
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate clockwise")).click()
             close()
         }
@@ -251,7 +256,7 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate clockwise")).click()
             close()
         }
@@ -262,7 +267,7 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate clockwise")).click()
             close()
         }
@@ -273,7 +278,7 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate clockwise")).click()
             close()
         }
@@ -284,8 +289,9 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
-            button(JButtonMatcher.withText("Rotate clockwise")).click().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
+            val rotateBtn = button(JButtonMatcher.withText("Rotate counter-clockwise"))
+            repeat(2) { rotateBtn.click() }
             close()
         }
         assertFileContentsEquals(
@@ -295,8 +301,9 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
-            button(JButtonMatcher.withText("Rotate clockwise")).click().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
+            val rotateBtn = button(JButtonMatcher.withText("Rotate counter-clockwise"))
+            repeat(2) { rotateBtn.click() }
             close()
         }
         assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
@@ -304,8 +311,9 @@ class PDFKTApplicationTest {
         /*rotate by 360 + 90 degrees */
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
-            button(JButtonMatcher.withText("Rotate clockwise")).click().click().click().click().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
+            val rotateBtn = button(JButtonMatcher.withText("Rotate counter-clockwise"))
+            repeat(5) { rotateBtn.click() }
             close()
         }
         assertFileContentsEquals(
@@ -322,7 +330,7 @@ class PDFKTApplicationTest {
         /*rotate by 90 degrees*/
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
             close()
         }
@@ -333,7 +341,7 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
             close()
         }
@@ -344,7 +352,7 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
             close()
         }
@@ -355,7 +363,7 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
             button(JButtonMatcher.withText("Rotate counter-clockwise")).click()
             close()
         }
@@ -366,8 +374,9 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
-            button(JButtonMatcher.withText("Rotate counter-clockwise")).click().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
+            val rotateBtn = button(JButtonMatcher.withText("Rotate counter-clockwise"))
+            repeat(2) { rotateBtn.click() }
             close()
         }
         assertFileContentsEquals(
@@ -377,8 +386,9 @@ class PDFKTApplicationTest {
 
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
-            button(JButtonMatcher.withText("Rotate counter-clockwise")).click().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
+            val rotateBtn = button(JButtonMatcher.withText("Rotate counter-clockwise"))
+            repeat(2) { rotateBtn.click() }
             close()
         }
         assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
@@ -386,8 +396,9 @@ class PDFKTApplicationTest {
         /*rotate by 360 + 90 degrees */
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
-            finder().findByType<JPagePreview>().toFixture().click()
-            button(JButtonMatcher.withText("Rotate counter-clockwise")).click().click().click().click().click()
+            finder.findByType<JPagePreview>(target()).toFixture().click()
+            val rotateBtn = button(JButtonMatcher.withText("Rotate counter-clockwise"))
+            repeat(5) { rotateBtn.click() }
             close()
         }
         assertFileContentsEquals(
@@ -424,9 +435,6 @@ private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, 
     dnd.drop(target, where)
 }
 
-private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.finder(): ComponentFinder =
-    robot().finder()
-
 private inline fun <reified S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.ctrlClick(): S {
     pressKey(VK_CONTROL)
     click()
@@ -455,7 +463,11 @@ class ComponentDragAndDropDelegate {
 }
 
 inline fun <reified T> ComponentFinder.findAllOfType(): List<T> = findAll { it is T }.map { it as T }
+inline fun <reified T> ComponentFinder.findAllOfType(root: Container): List<T> =
+    findAll(root) { it is T }.map { it as T }
+
 inline fun <reified T : Component> ComponentFinder.findByType(): T = findByType(T::class.java)
+inline fun <reified T : Component> ComponentFinder.findByType(root: Container): T = findByType(root, T::class.java)
 
 fun JPanelFixture.isSelected(): Boolean {
     val border = target().border
