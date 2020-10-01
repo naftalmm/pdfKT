@@ -30,6 +30,7 @@ import java.awt.event.KeyEvent.VK_CONTROL
 import java.awt.event.KeyEvent.VK_DELETE
 import java.awt.event.KeyEvent.VK_O
 import java.awt.event.KeyEvent.VK_SHIFT
+import java.awt.event.KeyEvent.VK_Z
 import java.io.File
 import java.net.URLDecoder
 import java.nio.file.Files
@@ -50,6 +51,9 @@ class PDFKTApplicationTest {
 
         @Suppress("DEPRECATION")
         private val ctrlO: KeyPressInfo = keyCode(VK_O).modifiers(CTRL_MASK)
+
+        @Suppress("DEPRECATION")
+        private val ctrlZ: KeyPressInfo = keyCode(VK_Z).modifiers(CTRL_MASK)
 
         @JvmStatic
         @BeforeAll
@@ -197,6 +201,33 @@ class PDFKTApplicationTest {
             val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
             assertTrue(pagePreviews.all { it.isSelected() })
         }
+    }
+
+    @Test
+    fun `should revert to previous state on Ctrl+Z`() {
+        renewTempDir()
+        addPDF("123")
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            finder.findAllOfType<JPagePreview>(target()).last().toFixture().click()
+            pressAndReleaseKey(keyCode(VK_DELETE))
+            assertEquals(2, finder.findAllOfType<JPagePreview>(target()).size)
+
+            finder.findAllOfType<JPagePreview>(target()).last().toFixture().click()
+            pressAndReleaseKey(keyCode(VK_DELETE))
+            assertEquals(1, finder.findAllOfType<JPagePreview>(target()).size)
+
+            pressAndReleaseKey(ctrlZ)
+            assertEquals(2, finder.findAllOfType<JPagePreview>(target()).size)
+            pressAndReleaseKey(ctrlZ)
+            assertEquals(3, finder.findAllOfType<JPagePreview>(target()).size)
+            pressAndReleaseKey(ctrlZ) //should do nothing in initial state
+
+            close()
+        }
+
+        assertFileContentsEquals(getTestResource("123.pdf"), saveToTempDirAs("123.pdf"))
     }
 
     @Test
