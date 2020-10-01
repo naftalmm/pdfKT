@@ -27,6 +27,7 @@ import java.awt.Point
 import java.awt.event.InputEvent.CTRL_MASK
 import java.awt.event.KeyEvent.VK_A
 import java.awt.event.KeyEvent.VK_CONTROL
+import java.awt.event.KeyEvent.VK_DELETE
 import java.awt.event.KeyEvent.VK_O
 import java.awt.event.KeyEvent.VK_SHIFT
 import java.io.File
@@ -240,17 +241,30 @@ class PDFKTApplicationTest {
 
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
+        /* Delete with button */
         with(window.dialog()) {
             val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
-            pagePreviews[2].click()
+            pagePreviews.last().click()
             button(JButtonMatcher.withText("Remove selected")).click()
 
             assertEquals(2, finder.findAllOfType<JPagePreview>(target()).size)
 
             close()
         }
-
         assertFileContentsEquals(getTestResource("12.pdf"), saveToTempDirAs("12.pdf"))
+
+        window.button(JButtonMatcher.withText("Edit")).click()
+        /* Delete with hotkey */
+        with(window.dialog()) {
+            val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
+            pagePreviews.last().click()
+            pressAndReleaseKey(keyCode(VK_DELETE))
+
+            assertEquals(1, finder.findAllOfType<JPagePreview>(target()).size)
+
+            close()
+        }
+        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
     }
 
     @Test
