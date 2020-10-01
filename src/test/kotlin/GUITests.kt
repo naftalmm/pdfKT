@@ -78,7 +78,7 @@ class PDFKTApplicationTest {
     fun tearDown() = window.cleanUp()
 
     @Test
-    fun shouldShowDropPDFsLabelWhenPDFsListIsEmpty() {
+    fun `should show drop PDFs label when PDFs list is empty`() {
         val dropPDFsLabel = window.label(JLabelMatcher.withText("Drop PDFs here"))
         //should be shown initially
         dropPDFsLabel.requireVisible()
@@ -93,18 +93,19 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldSupportDnDRearrangeItems() {
+    fun `should support d'n'd rearrange items`() {
         addPDF("1")
         addPDF("2")
-        val pdfsList = finder.findByType<JPDFsList>()
-        assertEquals("1", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
+        with(finder.findByType<JPDFsList>()) {
+            assertEquals("1", getCurrentPDFsState()[0].first.nameWithoutExtension)
 
-        window.label(JLabelMatcher.withText("2")).dragAndDropTo(Point(0, 0))
-        assertEquals("2", pdfsList.getCurrentPDFsState()[0].first.nameWithoutExtension)
+            finder.findAllOfType<JPDFDocumentListItem>(this)[1].toFixture().dragAndDropTo(Point(0, 0))
+            assertEquals("2", getCurrentPDFsState()[0].first.nameWithoutExtension)
+        }
     }
 
     @Test
-    fun shouldMergeInListOrder() {
+    fun `should merge in list order`() {
         renewTempDir()
 
         addPDF("1")
@@ -112,12 +113,12 @@ class PDFKTApplicationTest {
         assertFileContentsEquals(getTestResource("12.pdf"), saveToTempDirAs("12.pdf"))
 
         //rearrange 2 & 1
-        window.label(JLabelMatcher.withText("2")).dragAndDropTo(Point(0, 0))
+        finder.findAllOfType<JPDFDocumentListItem>()[1].toFixture().dragAndDropTo(Point(0, 0))
         assertFileContentsEquals(getTestResource("21.pdf"), saveToTempDirAs("21.pdf"))
     }
 
     @Test
-    fun shouldSelectPageOnClick() {
+    fun `should select page on click`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
@@ -130,7 +131,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldAddToSelectedPagesOnCtrlClickOnNotSelectedPage() {
+    fun `should add to selected pages on Ctrl+click on not selected page`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
@@ -143,7 +144,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldRemoveFromSelectedPagesOnCtrlClickOnSelectedPage() {
+    fun `should remove from selected pages on Ctrl+click on selected page`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
@@ -152,7 +153,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldSelectRangeOnShiftClick() {
+    fun `should select range on Shift+click`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
@@ -172,7 +173,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldSelectAllOnCtrlA() {
+    fun `should select all on Ctrl+A`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
@@ -183,7 +184,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldNotAllowRotationWhenNoPagesAreSelected() {
+    fun `should not allow rotation when no pages are selected`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
@@ -194,7 +195,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldNotAllowDeletionWhenNoPagesAreSelected() {
+    fun `should not allow deletion when no pages are selected`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
@@ -204,7 +205,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldNotAllowDeleteAllPages() {
+    fun `should not allow delete all pages`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
@@ -219,7 +220,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldDeleteSelectedPages() {
+    fun `should delete selected pages`() {
         renewTempDir()
 
         addPDF("123")
@@ -238,7 +239,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldRotateSelectedPagesClockwise() {
+    fun `should rotate selected pages clockwise`() {
         renewTempDir()
         addPDF("1")
 
@@ -323,7 +324,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldRotateSelectedPagesCounterClockwise() {
+    fun `should rotate selected pages counter-clockwise`() {
         renewTempDir()
         addPDF("1")
 
@@ -408,7 +409,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldRotateAllSelectedPagesClockwise() {
+    fun `should rotate all selected pages clockwise`() {
         renewTempDir()
         addPDF("123")
 
@@ -486,7 +487,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldRotateAllSelectedPagesCounterClockwise() {
+    fun `should rotate all selected pages counter-clockwise`() {
         renewTempDir()
         addPDF("123")
 
@@ -564,7 +565,7 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    fun shouldShowAdditionalDialogOnSavingToExistingFile() {
+    fun `should show additional dialog on saving to existing file`() {
         renewTempDir()
         addPDF("1")
         assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
@@ -598,7 +599,7 @@ class PDFKTApplicationTest {
 private fun <S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.dragAndDropTo(where: Point) {
     val dnd = robot().dnd
     val target = target()
-    dnd.drag(target, Point(target.x, target.y))
+    dnd.drag(target, Point(target.bounds.x / 2, target.bounds.y / 2))
     dnd.drop(target, where)
 }
 
