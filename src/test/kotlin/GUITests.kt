@@ -407,6 +407,14 @@ class PDFKTApplicationTest {
         )
     }
 
+    @Test
+    fun shouldShowAdditionalDialogOnSavingToExistingFile() {
+        renewTempDir()
+        addPDF("1")
+        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
+        assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf", true))
+    }
+
     private fun addPDF(name: String) {
         window.pressAndReleaseKey(ctrlO).fileChooser().selectFile(getTestResource("$name.pdf")).approve()
     }
@@ -415,12 +423,15 @@ class PDFKTApplicationTest {
         tempDir = createTempDir(prefix = "pdfKT_test").also { it.deleteOnExit() }
     }
 
-    private fun saveToTempDirAs(name: String): File {
+    private fun saveToTempDirAs(name: String, replaceExisting: Boolean = false): File {
         window.button(JButtonMatcher.withText("Save as PDF...")).click()
         val result = tempDir.resolve(name)
         with(window.fileChooser()) {
             fileNameTextBox().setText(result.absolutePath)
             approve()
+            if (replaceExisting) {
+                window.optionPane().yesButton().click()
+            }
         }
         return result
     }
