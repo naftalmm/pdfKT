@@ -131,6 +131,21 @@ class PDFKTApplicationTest {
     }
 
     @Test
+    fun `should reset page selection on click`() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            pressAndReleaseKey(ctrlA)
+            val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
+            with(pagePreviews[0]) {
+                click()
+                requireSelected()
+            }
+            assertEquals(1, pagePreviews.count { it.isSelected() })
+        }
+    }
+
+    @Test
     fun `should add to selected pages on Ctrl+click on not selected page`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
