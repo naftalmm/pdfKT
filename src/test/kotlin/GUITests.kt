@@ -1,4 +1,3 @@
-
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.swing.core.ComponentDragAndDrop
 import org.assertj.swing.core.ComponentFinder
@@ -445,7 +444,7 @@ class PDFKTApplicationTest {
         renewTempDir()
         addPDF("1")
 
-        /*rotate by 90 degrees*/
+        /* rotate by 90 degrees */
         window.button(JButtonMatcher.withText("Edit")).click()
         with(window.dialog()) {
             finder.findByType<JPagePreview>(target()).toFixture().click()
@@ -487,7 +486,7 @@ class PDFKTApplicationTest {
         }
         assertFileContentsEquals(getTestResource("1.pdf"), saveToTempDirAs("1.pdf"))
 
-        /*rotate by 180 degrees*/
+        /* rotate by 180 degrees */
         renewTempDir()
 
         window.button(JButtonMatcher.withText("Edit")).click()
@@ -759,14 +758,14 @@ private inline fun <reified S, C : Component, D : ComponentDriver> AbstractCompo
     return S::class.java.cast(this);
 }
 
-val Robot.dnd: ComponentDragAndDrop by ComponentDragAndDropDelegate()
+val Robot.dnd by LazyDelegate<Robot, ComponentDragAndDrop> { ComponentDragAndDrop(this) }
 
-class ComponentDragAndDropDelegate {
-    lateinit var value: ComponentDragAndDrop
+class LazyDelegate<T : Any, P : Any>(private val initializer: T.() -> P) {
+    private lateinit var value: P
 
-    operator fun getValue(thisRef: Robot, property: KProperty<*>): ComponentDragAndDrop {
+    operator fun getValue(thisRef: T, property: KProperty<*>): P {
         if (!this::value.isInitialized) {
-            value = ComponentDragAndDrop(thisRef)
+            value = initializer.invoke(thisRef)
         }
         return value
     }
