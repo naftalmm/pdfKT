@@ -166,7 +166,7 @@ class PDFKTApplicationTest {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
-        pagePreviews[0].click().requireSelected()
+        pagePreviews[0].ctrlClick().requireSelected()
         pagePreviews[1].ctrlClick()
 
         pagePreviews[0].requireSelected()
@@ -188,9 +188,10 @@ class PDFKTApplicationTest {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
         val pagePreviews = finder.findAllOfType<JPagePreview>(window.dialog().target()).map { it.toFixture() }
-        pagePreviews[2].click().requireSelected()
-        pagePreviews[1].shiftClick()
+        pagePreviews[2].shiftClick().requireSelected()
+        assertEquals(1, pagePreviews.count { it.isSelected() })
 
+        pagePreviews[1].shiftClick()
         pagePreviews[2].requireSelected()
         pagePreviews[1].requireSelected()
         assertEquals(2, pagePreviews.count { it.isSelected() })
