@@ -1,3 +1,4 @@
+
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.swing.core.ComponentDragAndDrop
 import org.assertj.swing.core.ComponentFinder
@@ -19,15 +20,19 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
 import java.awt.Point
 import java.awt.event.InputEvent.CTRL_MASK
+import java.awt.event.InputEvent.SHIFT_MASK
 import java.awt.event.KeyEvent.VK_A
 import java.awt.event.KeyEvent.VK_CONTROL
 import java.awt.event.KeyEvent.VK_DELETE
+import java.awt.event.KeyEvent.VK_END
+import java.awt.event.KeyEvent.VK_HOME
 import java.awt.event.KeyEvent.VK_O
 import java.awt.event.KeyEvent.VK_SHIFT
 import java.awt.event.KeyEvent.VK_Z
@@ -54,6 +59,12 @@ class PDFKTApplicationTest {
 
         @Suppress("DEPRECATION")
         private val ctrlZ: KeyPressInfo = keyCode(VK_Z).modifiers(CTRL_MASK)
+
+        @Suppress("DEPRECATION")
+        private val shiftHome: KeyPressInfo = keyCode(VK_HOME).modifiers(SHIFT_MASK)
+
+        @Suppress("DEPRECATION")
+        private val shiftEnd: KeyPressInfo = keyCode(VK_END).modifiers(SHIFT_MASK)
 
         @JvmStatic
         @BeforeAll
@@ -190,6 +201,51 @@ class PDFKTApplicationTest {
         //repeated shift+click doesn't remove selection
         pagePreviews[0].shiftClick()
         assertTrue(pagePreviews.all { it.isSelected() })
+    }
+
+    @Test
+    @Disabled("AssertJ Swing bug - Shift modifier is not working correctly")
+    fun `should select range from latest selected to first on Shift+Home`() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
+
+            //should do nothing when there is no previous selection
+            pressAndReleaseKey(shiftHome)
+            assertTrue(pagePreviews.all { it.isNotSelected() })
+
+            pagePreviews[1].click().requireSelected()
+            pressAndReleaseKey(shiftHome)
+
+            pagePreviews[0].requireSelected()
+            pagePreviews[1].requireSelected()
+            assertEquals(2, pagePreviews.count { it.isSelected() })
+
+            pressAndReleaseKey(shiftHome) //should do nothing
+        }
+    }
+
+    @Test
+    @Disabled("AssertJ Swing bug - Shift modifier is not working correctly")
+    fun `should select range from latest selected to last on Shift+End`() {
+        addPDF("123")
+        window.button(JButtonMatcher.withText("Edit")).click()
+        with(window.dialog()) {
+            val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
+
+            pressAndReleaseKey(shiftEnd) //should do nothing when there is no previous selection
+            assertTrue(pagePreviews.all { it.isNotSelected() })
+
+            pagePreviews[1].click().requireSelected()
+            pressAndReleaseKey(shiftEnd)
+
+            pagePreviews[1].requireSelected()
+            pagePreviews[2].requireSelected()
+            assertEquals(2, pagePreviews.count { it.isSelected() })
+
+            pressAndReleaseKey(shiftEnd) //should do nothing
+        }
     }
 
     @Test

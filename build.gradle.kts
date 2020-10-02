@@ -37,7 +37,7 @@ dependencies {
     implementation("org.icepdf.os:icepdf-core:6.3.0")
     implementation("com.itextpdf:kernel:7.1.12")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.2")
-    testImplementation("org.assertj", "assertj-swing-junit", "3.9.2")
+    testImplementation("org.assertj", "assertj-swing-junit", "3.17.1")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 }
 
