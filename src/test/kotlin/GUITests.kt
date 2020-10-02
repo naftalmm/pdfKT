@@ -223,6 +223,7 @@ class PDFKTApplicationTest {
             assertEquals(2, pagePreviews.count { it.isSelected() })
 
             pressAndReleaseKey(shiftHome) //should do nothing
+            assertEquals(2, pagePreviews.count { it.isSelected() })
         }
     }
 
@@ -245,6 +246,7 @@ class PDFKTApplicationTest {
             assertEquals(2, pagePreviews.count { it.isSelected() })
 
             pressAndReleaseKey(shiftEnd) //should do nothing
+            assertEquals(2, pagePreviews.count { it.isSelected() })
         }
     }
 
@@ -255,6 +257,8 @@ class PDFKTApplicationTest {
         with(window.dialog()) {
             pressAndReleaseKey(ctrlA)
             val pagePreviews = finder.findAllOfType<JPagePreview>(target()).map { it.toFixture() }
+            assertTrue(pagePreviews.all { it.isSelected() })
+            pressAndReleaseKey(ctrlA) //should do nothing
             assertTrue(pagePreviews.all { it.isSelected() })
         }
     }
