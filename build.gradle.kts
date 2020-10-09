@@ -3,6 +3,7 @@ plugins {
     kotlin("jvm") version "1.4.10"
     id("edu.sc.seis.launch4j") version "2.4.8"
     id("my-gradle-one-jar")
+    id("com.github.ben-manes.versions") version "0.33.0"
 //    id("com.github.onslip.gradle-one-jar") version "1.0.5"
 }
 
@@ -65,6 +66,11 @@ tasks {
         jar = onejar.get().archiveFile.get().toString()
         dependsOn(onejar)
         outputs.upToDateWhen { !onejar.get().didWork }
+    }
+
+    dependencyUpdates {
+        revision = "release"
+        gradleReleaseChannel = "current"
     }
 }
 
