@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "1.4.30"
-    id("edu.sc.seis.launch4j") version "2.4.8"
+    id("edu.sc.seis.launch4j") version "2.4.9"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.33.0"
 //    id("com.github.onslip.gradle-one-jar") version "1.0.5"
@@ -10,8 +10,8 @@ group = "mm.naftal"
 version = "1.0-SNAPSHOT"
 
 repositories {
-    jcenter()
     mavenCentral()
+    jcenter()
     exclusiveContent {
         forRepository {
             ivy {
