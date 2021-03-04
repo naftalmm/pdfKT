@@ -1,6 +1,5 @@
 plugins {
-    java
-    kotlin("jvm") version "1.4.10"
+    kotlin("jvm") version "1.4.30"
     id("edu.sc.seis.launch4j") version "2.4.8"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.33.0"
@@ -36,7 +35,7 @@ repositories {
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
-    implementation("com.itextpdf:kernel:7.1.12")
+    implementation("com.itextpdf:itext7-core:7.1.12")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.2")
     testImplementation("org.assertj", "assertj-swing-junit", "3.17.1")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
@@ -48,10 +47,16 @@ configure<JavaPluginConvention> {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions {
+            useIR = true
+            jvmTarget = "1.8"
+        }
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions {
+            useIR = true
+            jvmTarget = "1.8"
+        }
     }
     test {
         useJUnitPlatform()

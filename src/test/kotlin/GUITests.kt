@@ -38,16 +38,21 @@ import java.awt.event.KeyEvent.VK_Z
 import java.io.File
 import java.net.URLDecoder
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.Callable
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 import javax.swing.border.LineBorder
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempDirectory
 import kotlin.reflect.KProperty
 
+@ExperimentalPathApi
 class PDFKTApplicationTest {
     private lateinit var window: FrameFixture
     private lateinit var finder: ComponentFinder
-    private lateinit var tempDir: File
+    private lateinit var tempDir: Path
 
     companion object {
         @Suppress("DEPRECATION")
@@ -725,17 +730,17 @@ class PDFKTApplicationTest {
     }
 
     private fun renewTempDir() {
-        tempDir = createTempDir(prefix = "pdfKT_test").also { it.deleteOnExit() }
+        tempDir = createTempDirectory(prefix = "pdfKT_test").also { it.deleteOnExit() }
     }
 
     private fun saveToTempDirAs(name: String): File {
         window.button(JButtonMatcher.withText("Save as PDF...")).click()
         val result = tempDir.resolve(name)
         with(window.fileChooser()) {
-            fileNameTextBox().setText(result.absolutePath)
+            fileNameTextBox().setText(result.absolutePathString())
             approve()
         }
-        return result
+        return result.toFile()
     }
 
     private fun JPanel.toFixture(): JPanelFixture = JPanelFixture(window.robot(), this)
@@ -799,6 +804,7 @@ fun JPanelFixture.requireNotSelected(): JPanelFixture {
     return this
 }
 
+@ExperimentalPathApi
 private fun getTestResource(name: String): File =
     File(URLDecoder.decode(PDFKTApplicationTest::class.java.getResource("/$name").file, "UTF-8"))
 
