@@ -1,8 +1,8 @@
 plugins {
     kotlin("jvm") version "1.5.10"
-    id("edu.sc.seis.launch4j") version "2.4.9"
+    id("edu.sc.seis.launch4j") version "2.5.0"
     id("my-gradle-one-jar")
-    id("com.github.ben-manes.versions") version "0.33.0"
+    id("com.github.ben-manes.versions") version "0.39.0"
 //    id("com.github.onslip.gradle-one-jar") version "1.0.5"
 }
 
@@ -63,13 +63,6 @@ tasks {
             attributes("Main-Class" to "AppKt")
         }
     }
-    //TODO delete after launch4j update
-    createExe {
-        jar = onejar.get().archiveFile.get().toString()
-        dependsOn(onejar)
-        outputs.upToDateWhen { !onejar.get().didWork }
-    }
-
     dependencyUpdates {
         revision = "release"
         gradleReleaseChannel = "current"
@@ -79,6 +72,6 @@ tasks {
 launch4j {
     copyConfigurable = emptySet<File>()
     downloadUrl = "https://jdk.java.net/"
-//    jarTask = tasks.onejar.get() //TODO uncomment after launch4j update
+    jarTask = tasks.onejar.get()
 //    icon = "${projectDir}/icons/myApp.ico"
 }
