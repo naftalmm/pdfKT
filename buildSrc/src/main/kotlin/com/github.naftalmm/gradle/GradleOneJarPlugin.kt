@@ -158,15 +158,13 @@ class GradleOneJarPlugin : Plugin<Project> {
                     }
                 }
 
-                doFirst {
-                    if (mergeManifestFromBaseJar.get()) {
-                        JarFile(baseJar.get().asFile).use { baseJar ->
-                            manifest.attributes(baseJar.manifest.mainAttributes
-                                .mapKeys { (k, _) -> k.toString() }
-                                //attributes in onejar task manifest/oneJarBoot manifest
-                                //takes precedence over the ones from baseJar
-                                .filterKeys { !manifest.effectiveManifest.attributes.keys.contains(it) })
-                        }
+                if (mergeManifestFromBaseJar.get()) {
+                    JarFile(baseJar.get().asFile).use { baseJar ->
+                        manifest.attributes(baseJar.manifest.mainAttributes
+                            .mapKeys { (k, _) -> k.toString() }
+                            //attributes in onejar task manifest/oneJarBoot manifest
+                            //takes precedence over the ones from baseJar
+                            .filterKeys { !manifest.effectiveManifest.attributes.keys.contains(it) })
                     }
                 }
             }
