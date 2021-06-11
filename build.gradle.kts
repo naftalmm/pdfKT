@@ -1,5 +1,7 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
-    kotlin("jvm") version "1.4.30"
+    kotlin("jvm") version "1.5.10"
     id("edu.sc.seis.launch4j") version "2.4.9"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.33.0"
@@ -33,7 +35,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
     implementation("com.itextpdf:itext7-core:7.1.12")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.2")
@@ -48,13 +50,11 @@ configure<JavaPluginConvention> {
 tasks {
     compileKotlin {
         kotlinOptions {
-            useIR = true
             jvmTarget = "1.8"
         }
     }
     compileTestKotlin {
         kotlinOptions {
-            useIR = true
             jvmTarget = "1.8"
         }
     }
