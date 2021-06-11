@@ -1,5 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-
 plugins {
     kotlin("jvm") version "1.5.10"
     id("edu.sc.seis.launch4j") version "2.4.9"
@@ -13,7 +11,6 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    jcenter()
     exclusiveContent {
         forRepository {
             ivy {
