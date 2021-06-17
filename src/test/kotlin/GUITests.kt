@@ -43,12 +43,10 @@ import java.util.concurrent.Callable
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 import javax.swing.border.LineBorder
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.reflect.KProperty
 
-@ExperimentalPathApi
 class PDFKTApplicationTest {
     private lateinit var window: FrameFixture
     private lateinit var finder: ComponentFinder
@@ -757,14 +755,14 @@ private inline fun <reified S, C : Component, D : ComponentDriver> AbstractCompo
     pressKey(VK_CONTROL)
     click()
     releaseKey(VK_CONTROL)
-    return S::class.java.cast(this);
+    return S::class.java.cast(this)
 }
 
 private inline fun <reified S, C : Component, D : ComponentDriver> AbstractComponentFixture<S, C, D>.shiftClick(): S {
     pressKey(VK_SHIFT)
     click()
     releaseKey(VK_SHIFT)
-    return S::class.java.cast(this);
+    return S::class.java.cast(this)
 }
 
 val Robot.dnd by LazyDelegate<Robot, ComponentDragAndDrop> { ComponentDragAndDrop(this) }
@@ -804,9 +802,8 @@ fun JPanelFixture.requireNotSelected(): JPanelFixture {
     return this
 }
 
-@ExperimentalPathApi
 private fun getTestResource(name: String): File =
-    File(URLDecoder.decode(PDFKTApplicationTest::class.java.getResource("/$name").file, "UTF-8"))
+    File(URLDecoder.decode(PDFKTApplicationTest::class.java.getResource("/$name")!!.file, "UTF-8"))
 
 fun assertFileContentsEquals(expected: File, actual: File): Boolean {
     val expectedSize: Long = Files.size(expected.toPath())
