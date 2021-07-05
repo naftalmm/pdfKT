@@ -809,7 +809,7 @@ fun assertFileContentsEquals(expected: File, actual: File): Boolean {
     val expectedSize: Long = Files.size(expected.toPath())
     when {
         expectedSize != Files.size(actual.toPath()) -> return false
-        expectedSize < 2048 -> return expected.readBytes().contentEquals(actual.readBytes())
+        expectedSize <= DEFAULT_BUFFER_SIZE -> return expected.readBytes().contentEquals(actual.readBytes())
         else -> {
             expected.bufferedReader().use { bf1 ->
                 actual.bufferedReader().use { bf2 ->
