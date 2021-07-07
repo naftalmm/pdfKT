@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "1.5.20"
     id("edu.sc.seis.launch4j") version "2.5.0"
@@ -41,16 +43,13 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
 }
 
 tasks {
-    compileKotlin {
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
-    }
-    compileTestKotlin {
+    withType<KotlinCompile>().configureEach {
         kotlinOptions {
             jvmTarget = "1.8"
         }
