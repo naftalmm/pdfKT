@@ -5,9 +5,10 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.jvm.tasks.Jar
+import org.gradle.util.GradleVersion
 import java.io.File
 import java.util.jar.JarFile
 
@@ -48,9 +49,14 @@ class GradleOneJarPlugin : Plugin<Project> {
         project.pluginManager.apply(JavaPlugin::class.java)
 
         val extension = project.extensions.create("oneJar", GradleOneJarPluginExtension::class.java).apply {
-            val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
+            @Suppress("DEPRECATION")
+            val javaSourceSets = if (GradleVersion.current() >= "7.1")
+                project.extensions.getByType(JavaPluginExtension::class.java).sourceSets
+            else
+                project.convention.getPlugin(org.gradle.api.plugins.JavaPluginConvention::class.java).sourceSets
+
             val runtimeClasspathConfigurationName =
-                javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).runtimeClasspathConfigurationName
+                javaSourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).runtimeClasspathConfigurationName
             depLibs.from(project.configurations.getByName(runtimeClasspathConfigurationName))
             baseJar.convention((project.tasks.getByName("jar") as Jar).archiveFile)
         }
@@ -70,7 +76,7 @@ class GradleOneJarPlugin : Plugin<Project> {
                 ivy.metadataSources { it.artifact() }
             }
         }
-        if (project.gradle.gradleVersion >= "6.2") {
+        if (GradleVersion.current() >= "6.2") {
             project.repositories.exclusiveContent { exclusive ->
                 exclusive.forRepository { oneJarRepository }
                 exclusive.filter {
@@ -171,3 +177,5 @@ class GradleOneJarPlugin : Plugin<Project> {
         }
     }
 }
+
+private operator fun GradleVersion.compareTo(version: String): Int = this.compareTo(GradleVersion.version(version))
