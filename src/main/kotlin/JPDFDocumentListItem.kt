@@ -7,8 +7,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, Observable<PDFWasRemoved> {
-    override val subscribers: MutableList<WeakReference<Observer>> = ArrayList()
+class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, Observable<PDFWasRemoved> by ObservableImpl() {
     private val titleImageMaxSize = 50
     private val currentTitleImage = JImage(getCurrentTitleImagePreview())
 
@@ -19,7 +18,8 @@ class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, 
         add(currentTitleImage)
         add(JLabel(pdf.fileName))
         add(JButton("Edit").apply { addActionListener { createAndShowEditDialog() } })
-        add(JButton("Delete").apply { addActionListener { notifySubscribers() } })
+        val event = PDFWasRemoved(this)
+        add(JButton("Delete").apply { addActionListener { notifySubscribers(event) } })
         preferredSize = Dimension(size.width, titleImageMaxSize)
         maximumSize = Dimension(Int.MAX_VALUE, titleImageMaxSize)
         alignmentX = LEFT_ALIGNMENT
@@ -45,6 +45,4 @@ class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, 
         }
         else -> doNothing()
     }
-
-    override fun getEvent() = PDFWasRemoved(this)
 }

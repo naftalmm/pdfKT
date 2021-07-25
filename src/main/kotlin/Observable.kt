@@ -9,7 +9,7 @@ interface Observer {
             events.forEach { observable.addObserver(it, this) }
         }
 
-    fun subscribeTo(vararg observables: AbstractObservable) = observables.forEach {
+    fun subscribeTo(vararg observables: BaseObservable) = observables.forEach {
         when (it) {
             is Observable<*> -> it.addObserver(this)
             is MultiObservable -> it.addAllEventsObserver(this)
@@ -28,35 +28,55 @@ data class PDFWasRemoved(val pdf: JPDFDocumentListItem) : ObservableEvent()
 object AllPDFsWereRemoved : ObservableEvent()
 object FirstPDFWasAdded : ObservableEvent()
 object TitleImageChanged : ObservableEvent()
-object AllPagesWereSelected: ObservableEvent()
-object PenultPageWasSelected: ObservableEvent()
+object AllPagesWereSelected : ObservableEvent()
+object PenultPageWasSelected : ObservableEvent()
 
-interface AbstractObservable
-interface Observable<T : ObservableEvent> : AbstractObservable {
-    val subscribers: MutableList<WeakReference<Observer>>
+interface BaseObservable
 
-    fun addObserver(observer: Observer) {
+interface Observable<T : ObservableEvent> : BaseObservable {
+    fun addObserver(observer: Observer)
+    fun notifySubscribers(event: T)
+}
+
+interface MultiObservable : BaseObservable {
+    fun addObserver(event: KClass<out ObservableEvent>, observer: Observer)
+    fun addAllEventsObserver(observer: Observer)
+    fun notifySubscribers(event: ObservableEvent)
+}
+
+abstract class AbstractObservable<T : ObservableEvent> : Observable<T> {
+    protected abstract val subscribers: MutableList<WeakReference<Observer>>
+
+    override fun addObserver(observer: Observer) {
         subscribers.add(WeakReference(observer))
     }
 
-    fun notifySubscribers() = subscribers.forEach { it.get()?.update(getEvent()) }
-    fun getEvent(): T
+    override fun notifySubscribers(event: T) = subscribers.forEach { it.get()?.update(event) }
 }
 
-interface MultiObservable : AbstractObservable {
-    val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>>
-    val allEventsSubscribers: MutableList<WeakReference<Observer>>
+abstract class AbstractMultiObservable : MultiObservable {
+    protected abstract val subscribers: MutableMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>>
+    protected abstract val allEventsSubscribers: MutableList<WeakReference<Observer>>
 
-    fun addObserver(event: KClass<out ObservableEvent>, observer: Observer) {
+    override fun addObserver(event: KClass<out ObservableEvent>, observer: Observer) {
         subscribers.getOrPut(event) { ArrayList() }.add(WeakReference(observer))
     }
 
-    fun addAllEventsObserver(observer: Observer) {
+    override fun addAllEventsObserver(observer: Observer) {
         allEventsSubscribers.add(WeakReference(observer))
     }
 
-    fun notifySubscribers(event: ObservableEvent) {
+    override fun notifySubscribers(event: ObservableEvent) {
         allEventsSubscribers.forEach { it.get()?.update(event) }
         subscribers[event::class]?.forEach { it.get()?.update(event) }
     }
+}
+
+class ObservableImpl<T : ObservableEvent> : AbstractObservable<T>() {
+    override val subscribers = ArrayList<WeakReference<Observer>>()
+}
+
+class MultiObservableImpl : AbstractMultiObservable() {
+    override val subscribers = hashMapOf<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>>()
+    override val allEventsSubscribers = ArrayList<WeakReference<Observer>>()
 }

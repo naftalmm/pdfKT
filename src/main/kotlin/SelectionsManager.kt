@@ -1,9 +1,7 @@
 import java.lang.ref.WeakReference
 import kotlin.reflect.KClass
 
-class SelectionsManager : MultiObservable {
-    override val allEventsSubscribers: MutableList<WeakReference<Observer>> = ArrayList()
-    override val subscribers: HashMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>> = hashMapOf()
+class SelectionsManager : MultiObservable by MultiObservableImpl() {
     private val panelsOrder: LinkedHashMap<JSelectablePanel, Int> = LinkedHashMap()
     private var latestSelectedPanel: JSelectablePanel? = null
         set(value) {

@@ -28,13 +28,11 @@ enum class Rotation(val angle: Int) {
 
 data class DocumentState(val pages: LinkedHashMap<Int, Rotation>)
 
-class PDFDocumentEditModel(val pdf: PDFDocument) : MultiObservable {
+class PDFDocumentEditModel(val pdf: PDFDocument) : MultiObservable by MultiObservableImpl() {
     companion object {
         private val loadingImage = ImageIcon(PDFDocument::class.java.getResource("loading.gif")).image
     }
 
-    override val subscribers: HashMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>> = hashMapOf()
-    override val allEventsSubscribers: MutableList<WeakReference<Observer>> = ArrayList()
     private val statesStack: LinkedList<DocumentState> = initStatesStack()
     val fileName = pdf.fileName
 

@@ -7,9 +7,7 @@ import javax.swing.BoxLayout
 import javax.swing.JPanel
 import kotlin.reflect.KClass
 
-class JPDFsList : JPanel(), MultiObservable, Observer {
-    override val subscribers: HashMap<KClass<out ObservableEvent>, MutableList<WeakReference<Observer>>> = hashMapOf()
-    override val allEventsSubscribers = ArrayList<WeakReference<Observer>>()
+class JPDFsList : JPanel(), Observer, MultiObservable by MultiObservableImpl() {
     private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()
     private val drag = object : MouseAdapter() {
         private lateinit var pressed: MouseEvent
