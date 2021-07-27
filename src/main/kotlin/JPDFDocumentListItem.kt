@@ -35,14 +35,13 @@ class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, 
         }
     }
 
-    override fun update(event: ObservableEvent) = when (event) {
-        TitleImageChanged -> {
+    override fun update(event: ObservableEvent) {
+        if (event == TitleImageChanged) {
             currentTitleImage.repaintWith(getCurrentTitleImagePreview())
             edt {
                 validate()
                 repaint()
             }
         }
-        else -> doNothing()
     }
 }

@@ -106,10 +106,11 @@ class App : JFrame(), Observer {
         }
     }
 
-    override fun update(event: ObservableEvent) = when (event) {
-        FirstPDFWasAdded -> edt { cardLayout.show(workspace) }
-        AllPDFsWereRemoved -> edt { cardLayout.show(dropPDFsLabel) }
-        else -> doNothing()
+    override fun update(event: ObservableEvent) {
+        when (event) {
+            FirstPDFWasAdded -> edt { cardLayout.show(workspace) }
+            AllPDFsWereRemoved -> edt { cardLayout.show(dropPDFsLabel) }
+        }
     }
 }
 

@@ -15,21 +15,19 @@ interface Observer {
             is MultiObservable -> it.addAllEventsObserver(this)
         }
     }
-
-    fun doNothing() = Unit
 }
 
-sealed class ObservableEvent
-data class PanelSelected(val panel: JSelectablePanel) : ObservableEvent()
-object ThumbnailLoaded : ObservableEvent()
-object AllPagesWereUnSelected : ObservableEvent()
-object FirstPageWasSelected : ObservableEvent()
-data class PDFWasRemoved(val pdf: JPDFDocumentListItem) : ObservableEvent()
-object AllPDFsWereRemoved : ObservableEvent()
-object FirstPDFWasAdded : ObservableEvent()
-object TitleImageChanged : ObservableEvent()
-object AllPagesWereSelected : ObservableEvent()
-object PenultPageWasSelected : ObservableEvent()
+interface ObservableEvent
+data class PanelSelected(val panel: JSelectablePanel) : ObservableEvent
+object ThumbnailLoaded : ObservableEvent
+object AllPagesWereUnSelected : ObservableEvent
+object FirstPageWasSelected : ObservableEvent
+data class PDFWasRemoved(val pdf: JPDFDocumentListItem) : ObservableEvent
+object AllPDFsWereRemoved : ObservableEvent
+object FirstPDFWasAdded : ObservableEvent
+object TitleImageChanged : ObservableEvent
+object AllPagesWereSelected : ObservableEvent
+object PenultPageWasSelected : ObservableEvent
 
 interface BaseObservable
 

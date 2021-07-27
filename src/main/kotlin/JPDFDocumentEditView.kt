@@ -149,15 +149,15 @@ class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) 
         return screenSize.height - taskBarHeight
     }
 
-    override fun update(event: ObservableEvent) = when (event) {
-        is PanelSelected -> currentPageView.setCurrentPage((event.panel as JPagePreview).pageIndex)
-        ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
-        AllPagesWereUnSelected -> edt { notEmptySelectionDependentButtons.forEach { it.isEnabled = false } }
-        FirstPageWasSelected -> edt { notEmptySelectionDependentButtons.forEach { it.isEnabled = true } }
-        PenultPageWasSelected -> edt { someButNotAllSelectionDependentButtons.forEach { it.isEnabled = true } }
-        AllPagesWereSelected -> edt { someButNotAllSelectionDependentButtons.forEach { it.isEnabled = false } }
-        else -> doNothing()
-    }.also {
+    override fun update(event: ObservableEvent) {
+        when (event) {
+            is PanelSelected -> currentPageView.setCurrentPage((event.panel as JPagePreview).pageIndex)
+            ThumbnailLoaded -> edt { pagesPreviewsPanel.updateUI() }
+            AllPagesWereUnSelected -> edt { notEmptySelectionDependentButtons.forEach { it.isEnabled = false } }
+            FirstPageWasSelected -> edt { notEmptySelectionDependentButtons.forEach { it.isEnabled = true } }
+            PenultPageWasSelected -> edt { someButNotAllSelectionDependentButtons.forEach { it.isEnabled = true } }
+            AllPagesWereSelected -> edt { someButNotAllSelectionDependentButtons.forEach { it.isEnabled = false } }
+        }
         edt {
             validate()
             repaint()
