@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.20"
+    kotlin("jvm") version "1.5.21"
     id("edu.sc.seis.launch4j") version "2.5.0"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.39.0"
