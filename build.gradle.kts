@@ -1,7 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    kotlin("jvm") version "1.5.21"
+    kotlin("jvm") version "1.5.30"
     id("edu.sc.seis.launch4j") version "2.5.0"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.39.0"
@@ -42,18 +40,18 @@ dependencies {
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+kotlin {
+    jvmToolchain {
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+    }
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = "1.6"
+        }
     }
 }
 
 tasks {
-    withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
-    }
     test {
         useJUnitPlatform()
     }
