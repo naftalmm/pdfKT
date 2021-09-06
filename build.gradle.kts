@@ -32,10 +32,11 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
-    implementation("com.itextpdf:itext7-core:7.1.12")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.6.2")
+    implementation("com.itextpdf:kernel:7.1.16")
+    testImplementation("com.itextpdf:layout:7.1.16")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.2")
     testImplementation("org.assertj", "assertj-swing-junit", "3.17.1")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 }
