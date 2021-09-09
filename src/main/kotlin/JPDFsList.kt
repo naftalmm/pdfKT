@@ -5,7 +5,6 @@ import java.io.File
 import java.lang.ref.WeakReference
 import javax.swing.BoxLayout
 import javax.swing.JPanel
-import kotlin.reflect.KClass
 
 class JPDFsList : JPanel(), Observer, MultiObservable by MultiObservableImpl() {
     private val pdfDocumentsCache = HashMap<File, WeakReference<PDFDocument>>()

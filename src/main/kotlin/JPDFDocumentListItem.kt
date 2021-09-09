@@ -1,7 +1,6 @@
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Frame
-import java.lang.ref.WeakReference
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel

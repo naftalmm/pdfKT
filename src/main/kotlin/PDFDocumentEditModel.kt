@@ -1,12 +1,8 @@
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.awt.Image
-import java.lang.ref.WeakReference
-import java.util.*
+import java.util.LinkedList
 import javax.swing.ImageIcon
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
-import kotlin.reflect.KClass
 
 enum class Rotation(val angle: Int) {
     NORTH(0), EAST(90), SOUTH(180), WEST(270);

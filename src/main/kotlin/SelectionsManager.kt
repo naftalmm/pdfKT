@@ -1,6 +1,3 @@
-import java.lang.ref.WeakReference
-import kotlin.reflect.KClass
-
 class SelectionsManager : MultiObservable by MultiObservableImpl() {
     private val panelsOrder: LinkedHashMap<JSelectablePanel, Int> = LinkedHashMap()
     private var latestSelectedPanel: JSelectablePanel? = null
