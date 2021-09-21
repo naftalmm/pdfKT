@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.5.30"
-    id("edu.sc.seis.launch4j") version "2.5.0"
+    kotlin("jvm") version "1.5.31"
+    id("edu.sc.seis.launch4j") version "2.5.1"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.39.0"
 //    id("com.github.onslip.gradle-one-jar") version "1.0.5"
@@ -32,11 +32,11 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
     implementation("com.itextpdf:kernel:7.1.16")
     testImplementation("com.itextpdf:layout:7.1.16")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.0")
     testImplementation("org.assertj", "assertj-swing-junit", "3.17.1")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
 }
