@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.5.31"
+    kotlin("jvm") version "1.6.10"
     id("edu.sc.seis.launch4j") version "2.5.1"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.39.0"
@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("org.icepdf.os:icepdf-core:6.3.0")
     implementation("com.itextpdf:kernel:7.1.16")
     testImplementation("com.itextpdf:layout:7.1.16")
@@ -48,6 +48,7 @@ kotlin {
     sourceSets.all {
         languageSettings.apply {
             languageVersion = "1.6"
+            progressiveMode = true
         }
     }
 }
