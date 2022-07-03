@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.7.0"
     `java-gradle-plugin`
 }
 
@@ -7,12 +7,15 @@ repositories {
     mavenCentral()
 }
 
-tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
     }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+    sourceSets.all {
+        languageSettings.apply {
+            languageVersion = "1.7"
+            progressiveMode = true
+        }
     }
 }
 
