@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Component
@@ -207,7 +206,6 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    @Disabled("AssertJ Swing bug - Shift modifier is not working correctly")
     fun `should select range from latest selected to first on Shift+Home`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
@@ -231,7 +229,6 @@ class PDFKTApplicationTest {
     }
 
     @Test
-    @Disabled("AssertJ Swing bug - Shift modifier is not working correctly")
     fun `should select range from latest selected to last on Shift+End`() {
         addPDF("123")
         window.button(JButtonMatcher.withText("Edit")).click()
