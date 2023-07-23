@@ -16,8 +16,9 @@ import javax.swing.JDialog
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 
-class JPDFDocumentEditView(owner: Frame, private val pdf: PDFDocumentEditModel) : JDialog(owner, pdf.fileName),
-    Observer {
+class JPDFDocumentEditView(
+    owner: Frame, private val pdf: PDFDocumentEditModel
+) : JDialog(owner, pdf.fileName), Observer {
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val currentPageView = JCurrentPageView(pdf)

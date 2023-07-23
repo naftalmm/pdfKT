@@ -10,7 +10,7 @@ fun edt(runnable: () -> Unit) {
     EventQueue.invokeLater(runnable)
 }
 
-fun Container.addAll(components: Iterable<Component>) = components.forEach { add(it) }
+fun Container.addAll(components: Iterable<Component>) = components.forEach(::add)
 
 operator fun Dimension.times(i: Int) = Dimension(this.width * i, this.height * i)
 
@@ -18,25 +18,24 @@ fun Path.deleteOnExit() = this.toFile().deleteOnExit()
 
 fun Component.decompose() {
     if (this is Container) {
-        components.forEach { it.decompose() }
+        components.forEach(Component::decompose)
         removeAll()
         if (this is AbstractButton) {
-            actionListeners.forEach { removeActionListener(it) }
-            changeListeners.forEach { removeChangeListener(it) }
-            itemListeners.forEach { removeItemListener(it) }
-        }
-        if (this is Window) {
-            windowListeners.forEach { removeWindowListener(it) }
-            windowFocusListeners.forEach { removeWindowFocusListener(it) }
-            windowStateListeners.forEach { removeWindowStateListener(it) }
+            actionListeners.forEach(::removeActionListener)
+            changeListeners.forEach(::removeChangeListener)
+            itemListeners.forEach(::removeItemListener)
+        } else if (this is Window) {
+            windowListeners.forEach(::removeWindowListener)
+            windowFocusListeners.forEach(::removeWindowFocusListener)
+            windowStateListeners.forEach(::removeWindowStateListener)
         }
 
-        containerListeners.forEach { removeContainerListener(it) }
+        containerListeners.forEach(::removeContainerListener)
     }
-    keyListeners.forEach { removeKeyListener(it) }
-    mouseListeners.forEach { removeMouseListener(it) }
-    mouseMotionListeners.forEach { removeMouseMotionListener(it) }
-    mouseWheelListeners.forEach { removeMouseWheelListener(it) }
-    componentListeners.forEach { removeComponentListener(it) }
-    focusListeners.forEach { removeFocusListener(it) }
+    keyListeners.forEach(::removeKeyListener)
+    mouseListeners.forEach(::removeMouseListener)
+    mouseMotionListeners.forEach(::removeMouseMotionListener)
+    mouseWheelListeners.forEach(::removeMouseWheelListener)
+    componentListeners.forEach(::removeComponentListener)
+    focusListeners.forEach(::removeFocusListener)
 }

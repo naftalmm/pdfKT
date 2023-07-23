@@ -6,8 +6,12 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) : JPanel(), Observer, Observable<PDFWasRemoved> by ObservableImpl() {
-    private val titleImageMaxSize = 50
+class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) :
+    JPanel(), Observer, Observable<PDFWasRemoved> by ObservableImpl() {
+    companion object {
+        private const val titleImageMaxSize = 50
+    }
+
     private val currentTitleImage = JImage(getCurrentTitleImagePreview())
 
     private fun getCurrentTitleImagePreview() = pdf.getCurrentTitleImage().fit(titleImageMaxSize)

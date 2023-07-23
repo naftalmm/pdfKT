@@ -4,7 +4,9 @@ import javax.swing.Box
 import javax.swing.JPanel
 
 class JCurrentPageView(private val pdf: PDFDocumentEditModel) : JPanel() {
-    private val currentImageMaxDimension = 600
+    companion object {
+        private const val currentImageMaxDimension = 600
+    }
 
     private val currentPageImageView = JImage(pdf.getCurrentTitleImage().fit(currentImageMaxDimension)).apply {
         alignmentY = Component.CENTER_ALIGNMENT

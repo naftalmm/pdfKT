@@ -64,17 +64,16 @@ class App : JFrame(), Observer {
             override fun importData(support: TransferSupport): Boolean {
                 if (!canImport(support)) return false
 
-                try {
+                return try {
                     @Suppress("UNCHECKED_CAST")
                     (support.transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<File>)
                         .filter { it.extension.equals("pdf", ignoreCase = true) }
                         .also { pdfsList.addPDFDocuments(it) }
+                    true
                 } catch (e: Exception) {
                     System.err.println(e)
-                    return false
+                    false
                 }
-
-                return true
             }
         }
         defaultCloseOperation = EXIT_ON_CLOSE

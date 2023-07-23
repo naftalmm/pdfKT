@@ -5,10 +5,8 @@ import javax.swing.border.Border
 
 open class JSelectablePanel : JPanel() {
     companion object {
-        private val blueBorder: Border =
-            BorderFactory.createLineBorder(Color.BLUE)
-        private val emptyBorder: Border =
-            BorderFactory.createEmptyBorder(1, 1, 1, 1)
+        private val blueBorder: Border = BorderFactory.createLineBorder(Color.BLUE)
+        private val emptyBorder: Border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
     }
 
     init {

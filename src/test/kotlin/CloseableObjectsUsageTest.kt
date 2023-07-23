@@ -1,5 +1,6 @@
 import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.never
+import com.nhaarman.mockitokotlin2.only
 import com.nhaarman.mockitokotlin2.verify
 import org.junit.jupiter.api.Test
 
@@ -11,7 +12,7 @@ class CloseableObjectsUsageTest {
         val mockCloseable = mock<AutoCloseable>()
         CloseableObjectsUsage.register(obj, mockCloseable)
         CloseableObjectsUsage.deregister(obj)
-        verify(mockCloseable, times(1)).close()
+        verify(mockCloseable, only()).close()
     }
 
     @Test
@@ -21,8 +22,8 @@ class CloseableObjectsUsageTest {
         val obj2 = Any()
         CloseableObjectsUsage.register(obj2, mockCloseable)
         CloseableObjectsUsage.deregister(obj)
-        verify(mockCloseable, times(0)).close()
+        verify(mockCloseable, never()).close()
         CloseableObjectsUsage.deregister(obj2)
-        verify(mockCloseable, times(1)).close()
+        verify(mockCloseable, only()).close()
     }
 }
