@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.9.0"
     `java-gradle-plugin`
 }
 
@@ -13,7 +13,7 @@ kotlin {
     }
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = "1.7"
+            languageVersion = "1.9"
             progressiveMode = true
         }
     }
