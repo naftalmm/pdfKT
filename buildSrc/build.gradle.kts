@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm") version "1.9.24"
     `java-gradle-plugin`
 }
 
@@ -8,9 +8,7 @@ repositories {
 }
 
 kotlin {
-    jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    }
+    jvmToolchain(11)
     sourceSets.all {
         languageSettings.apply {
             languageVersion = "1.9"

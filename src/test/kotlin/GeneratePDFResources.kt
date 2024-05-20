@@ -4,8 +4,8 @@ import com.itextpdf.layout.Document
 import com.itextpdf.layout.element.AreaBreak
 import com.itextpdf.layout.element.Paragraph
 import com.itextpdf.layout.element.Text
-import com.itextpdf.layout.property.AreaBreakType
-import com.itextpdf.layout.property.TextAlignment
+import com.itextpdf.layout.properties.AreaBreakType
+import com.itextpdf.layout.properties.TextAlignment
 import java.io.File
 import java.io.File.separatorChar as slash
 
@@ -21,9 +21,12 @@ private fun createPDF(vararg pages: String) {
     val outputFile = File("src${slash}test${slash}resources${slash}${pages.joinToString(separator = "")}.pdf")
     Document(PdfDocument(PdfWriter(outputFile))).use {
         pages.forEachIndexed { index, page ->
-            it.add(Paragraph(Text(page).apply { setFontSize(500.0f) }).apply { setTextAlignment(TextAlignment.CENTER) })
+            it.add(
+                Paragraph(Text(page).apply { setFontSize(500.0f) })
+                    .apply { setTextAlignment(TextAlignment.CENTER) }
+            )
             if (index != pages.lastIndex) {
-                 it.add(AreaBreak(AreaBreakType.NEXT_PAGE))
+                it.add(AreaBreak(AreaBreakType.NEXT_PAGE))
             }
         }
     }
