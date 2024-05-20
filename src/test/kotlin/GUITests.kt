@@ -44,6 +44,7 @@ import javax.swing.border.EmptyBorder
 import javax.swing.border.LineBorder
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.exists
 import kotlin.reflect.KProperty
 
 class PDFKTApplicationTest {
@@ -718,6 +719,21 @@ class PDFKTApplicationTest {
             window.optionPane().yesButton().click()
             assertFileContentsEquals(getTestResource("12.pdf"), savedFile)
         }
+    }
+
+    @Test
+    fun `should append pdf extension to name of saved file, but only if it's absent`() {
+        renewTempDir()
+        addPDF("1")
+
+        saveToTempDirAs("12")
+        assert(tempDir.resolve("12.pdf").exists())
+
+        saveToTempDirAs("123.pdf")
+        assert(tempDir.resolve("123.pdf").exists())
+
+        saveToTempDirAs("1234.PDF")
+        assert(tempDir.resolve("1234.PDF").exists())
     }
 
     private fun addPDF(name: String) {
