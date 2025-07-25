@@ -1,8 +1,8 @@
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.never
-import com.nhaarman.mockitokotlin2.only
-import com.nhaarman.mockitokotlin2.verify
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.only
+import org.mockito.kotlin.verify
 
 class CloseableObjectsUsageTest {
     private val obj = Any()
