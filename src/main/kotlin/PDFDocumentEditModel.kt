@@ -33,38 +33,34 @@ class PDFDocumentEditModel(val pdf: PDFDocument) : MultiObservable by MultiObser
     val fileName = pdf.fileName
 
     private fun initStatesStack() = LinkedList<DocumentState>()
-        .apply { push(DocumentState((0 until pdf.numberOfPages).associateWithTo(LinkedHashMap()) { Rotation.NORTH })) }
+        .apply { push(DocumentState((0 until pdf.numberOfPages).associateWithTo(linkedMapOf()) { Rotation.NORTH })) }
 
     fun removePages(indexes: Set<Int>) {
-        val newState = DocumentState(getCurrentState().pages.filterNotTo(LinkedHashMap()) { indexes.contains(it.key) })
+        val newState = DocumentState(getCurrentState().pages.filterNotTo(linkedMapOf()) { indexes.contains(it.key) })
         changeState(newState)
     }
 
     fun rotateAllPagesClockwise() {
         val newState = DocumentState(getCurrentState().pages
-            .map { (k, v) -> k to v.rotateClockwise() }
-            .toMap(LinkedHashMap()))
+            .mapValuesTo(linkedMapOf()) { (_, v) -> v.rotateClockwise() })
         changeState(newState)
     }
 
     fun rotatePagesClockwise(indexes: Set<Int>) {
         val newState = DocumentState(getCurrentState().pages
-            .map { (k, v) -> k to if (indexes.contains(k)) v.rotateClockwise() else v }
-            .toMap(LinkedHashMap()))
+            .mapValuesTo(linkedMapOf()) { (k, v) -> if (indexes.contains(k)) v.rotateClockwise() else v })
         changeState(newState)
     }
 
     fun rotateAllPagesCounterClockwise() {
         val newState = DocumentState(getCurrentState().pages
-            .map { (k, v) -> k to v.rotateCounterClockwise() }
-            .toMap(LinkedHashMap()))
+            .mapValuesTo(linkedMapOf())  { (_, v) -> v.rotateCounterClockwise() })
         changeState(newState)
     }
 
     fun rotatePagesCounterClockwise(indexes: Set<Int>) {
         val newState = DocumentState(getCurrentState().pages
-            .map { (k, v) -> k to if (indexes.contains(k)) v.rotateCounterClockwise() else v }
-            .toMap(LinkedHashMap()))
+            .mapValuesTo(linkedMapOf()) { (k, v) -> if (indexes.contains(k)) v.rotateCounterClockwise() else v })
         changeState(newState)
     }
 
@@ -103,15 +99,15 @@ class PDFDocumentEditModel(val pdf: PDFDocument) : MultiObservable by MultiObser
     private fun getCurrentPageRotation(pageIndex: Int) = getCurrentState().pages[pageIndex] ?: Rotation.NORTH
 
     fun getCurrentPagesThumbnails(scope: CoroutineScope): Map<Int, JImage> =
-        getCurrentState().pages.map { (pageIndex, rotation) ->
+        getCurrentState().pages.mapValues { (pageIndex, rotation) ->
             val preloadedThumbnail = pdf.getPreloadedPageThumbnail(pageIndex)
-            val pagePreview = JImage(preloadedThumbnail?.rotate(rotation) ?: loadingImage)
-            if (preloadedThumbnail == null) {
-                scope.launch {
-                    pagePreview.repaintWith(pdf.getPageThumbnail(pageIndex).rotate(rotation))
-                    notifySubscribers(ThumbnailLoaded)
+            JImage(preloadedThumbnail?.rotate(rotation) ?: loadingImage).also { pagePreview ->
+                if (preloadedThumbnail == null) {
+                    scope.launch {
+                        pagePreview.repaintWith(pdf.getPageThumbnail(pageIndex).rotate(rotation))
+                        notifySubscribers(ThumbnailLoaded)
+                    }
                 }
             }
-            pageIndex to pagePreview
-        }.toMap()
+        }
 }
