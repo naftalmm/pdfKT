@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.9.24"
+    kotlin("jvm") version "2.2.0"
     id("edu.sc.seis.launch4j") version "3.0.3"
     id("my-gradle-one-jar")
     id("com.github.ben-manes.versions") version "0.47.0"
@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("com.github.pcorless.icepdf:icepdf-core:7.3.0")
     val iTextPdfVersion = "9.2.0"
     implementation("com.itextpdf:kernel:$iTextPdfVersion")
@@ -29,7 +29,7 @@ kotlin {
     jvmToolchain(11)
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = "1.9"
+            languageVersion = "2.2"
             progressiveMode = true
         }
     }
