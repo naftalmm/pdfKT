@@ -15,8 +15,8 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("com.github.pcorless.icepdf:icepdf-core:7.2.0")
-    val iTextPdfVersion = "8.0.2"
+    implementation("com.github.pcorless.icepdf:icepdf-core:7.3.0")
+    val iTextPdfVersion = "9.2.0"
     implementation("com.itextpdf:kernel:$iTextPdfVersion")
     testImplementation("com.itextpdf:layout:$iTextPdfVersion")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")

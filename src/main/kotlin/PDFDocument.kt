@@ -3,6 +3,7 @@ import org.icepdf.core.exceptions.PDFSecurityException
 import org.icepdf.core.pobjects.Document
 import org.icepdf.core.pobjects.Page
 import org.icepdf.core.util.GraphicsRenderingHints
+import pdf.viewer.FontPropertiesManager
 import java.awt.Image
 import java.io.File
 import java.io.FileNotFoundException
@@ -43,4 +44,11 @@ class PDFDocument(val file: File) : AutoCloseable {
         document.getPageImage(page, GraphicsRenderingHints.SCREEN, Page.BOUNDARY_CROPBOX, 0f, 1f)
 
     override fun close() = document.dispose()
+
+    companion object {
+        init {
+            // read/store the font cache.
+            FontPropertiesManager.loadOrReadSystemFonts()
+        }
+    }
 }
