@@ -17,8 +17,9 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 
 class JPDFDocumentEditView(
-    owner: Frame, private val pdf: PDFDocumentEditModel
-) : JDialog(owner, pdf.fileName), Observer {
+    owner: Frame,
+    private val pdf: PDFDocumentEditModel
+) : JDialog(owner, pdf.fileName), Observer, Observable<WindowWasClosed> by ObservableImpl() {
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private val currentPageView = JCurrentPageView(pdf)
@@ -38,6 +39,7 @@ class JPDFDocumentEditView(
             override fun windowClosed(e: WindowEvent) {
                 scope.coroutineContext.cancelChildren()
                 decompose()
+                notifySubscribers(WindowWasClosed(this@JPDFDocumentEditView))
             }
         })
 

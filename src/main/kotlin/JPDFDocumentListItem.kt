@@ -13,6 +13,12 @@ class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) :
     }
 
     private val currentTitleImage = JImage(getCurrentTitleImagePreview())
+    private val editButton = JButton("Edit").apply {
+        addActionListener {
+            isEnabled = false
+            createAndShowEditDialog()
+        }
+    }
 
     private fun getCurrentTitleImagePreview() = pdf.getCurrentTitleImage().fit(titleImageMaxSize)
 
@@ -20,7 +26,7 @@ class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) :
         layout = FlowLayout(FlowLayout.LEFT)
         add(currentTitleImage)
         add(JLabel(pdf.fileName))
-        add(JButton("Edit").apply { addActionListener { createAndShowEditDialog() } })
+        add(editButton)
         val event = PDFWasRemoved(this)
         add(JButton("Delete").apply { addActionListener { notifySubscribers(event) } })
         preferredSize = Dimension(size.width, titleImageMaxSize)
@@ -34,16 +40,24 @@ class JPDFDocumentListItem(val pdf: PDFDocumentEditModel) :
     private fun createAndShowEditDialog() {
         val owner = SwingUtilities.getRoot(this) as Frame
         edt {
-            JPDFDocumentEditView(owner, pdf).isVisible = true
+            val editView = JPDFDocumentEditView(owner, pdf).apply {
+                isVisible = true
+            }
+            subscribeTo(editView)
         }
     }
 
     override fun update(event: ObservableEvent) {
-        if (event == TitleImageChanged) {
-            currentTitleImage.repaintWith(getCurrentTitleImagePreview())
-            edt {
-                validate()
-                repaint()
+        when (event) {
+            TitleImageChanged -> {
+                currentTitleImage.repaintWith(getCurrentTitleImagePreview())
+                edt {
+                    validate()
+                    repaint()
+                }
+            }
+            is WindowWasClosed if event.window is JPDFDocumentEditView -> {
+                editButton.isEnabled = true
             }
         }
     }

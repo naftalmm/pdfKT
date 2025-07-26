@@ -1,3 +1,4 @@
+import java.awt.Window
 import java.lang.ref.WeakReference
 import kotlin.reflect.KClass
 
@@ -28,6 +29,7 @@ object FirstPDFWasAdded : ObservableEvent
 object TitleImageChanged : ObservableEvent
 object AllPagesWereSelected : ObservableEvent
 object PenultPageWasSelected : ObservableEvent
+data class WindowWasClosed(val window: Window) : ObservableEvent
 
 interface BaseObservable
 

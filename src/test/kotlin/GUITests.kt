@@ -736,6 +736,16 @@ class PDFKTApplicationTest {
         assert(tempDir.resolve("1234.PDF").exists())
     }
 
+    @Test
+    fun `should disable edit button when started editing pdf, and reenable after closing`() {
+        addPDF("1")
+        val editBtn = window.button(JButtonMatcher.withText("Edit"))
+        editBtn.click()
+        assert(!editBtn.isEnabled)
+        window.dialog().close()
+        assert(editBtn.isEnabled)
+    }
+
     private fun addPDF(name: String) {
         window.pressAndReleaseKey(ctrlO).fileChooser().selectFile(getTestResource("$name.pdf")).approve()
     }
