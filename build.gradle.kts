@@ -21,7 +21,7 @@ dependencies {
     testImplementation("com.itextpdf:layout:$iTextPdfVersion")
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.assertj", "assertj-swing-junit", "3.17.1")
+    testImplementation("org.assertj:assertj-swing-junit:3.17.1")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
 }
 

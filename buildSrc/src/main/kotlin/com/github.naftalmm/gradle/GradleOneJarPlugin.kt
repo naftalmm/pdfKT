@@ -8,7 +8,6 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.jvm.tasks.Jar
-import org.gradle.util.GradleVersion
 import java.io.File
 import java.util.jar.JarFile
 
@@ -49,12 +48,7 @@ class GradleOneJarPlugin : Plugin<Project> {
         project.pluginManager.apply(JavaPlugin::class.java)
 
         val extension = project.extensions.create("oneJar", GradleOneJarPluginExtension::class.java).apply {
-            @Suppress("DEPRECATION")
-            val javaSourceSets = if (GradleVersion.current() >= "7.1")
-                project.extensions.getByType(JavaPluginExtension::class.java).sourceSets
-            else
-                project.convention.getPlugin(org.gradle.api.plugins.JavaPluginConvention::class.java).sourceSets
-
+            val javaSourceSets = project.extensions.getByType(JavaPluginExtension::class.java).sourceSets
             val runtimeClasspathConfigurationName =
                 javaSourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).runtimeClasspathConfigurationName
             depLibs.from(project.configurations.getByName(runtimeClasspathConfigurationName))
@@ -76,17 +70,14 @@ class GradleOneJarPlugin : Plugin<Project> {
                 ivy.metadataSources { it.artifact() }
             }
         }
-        if (GradleVersion.current() >= "6.2") {
-            project.repositories.exclusiveContent { exclusive ->
-                exclusive.forRepository { oneJarRepository }
-                exclusive.filter {
-                    it.includeVersionByRegex("one-jar", "one-jar-boot", "0.97|0.98")
-                }
+        project.repositories.exclusiveContent { exclusive ->
+            exclusive.forRepository { oneJarRepository }
+            exclusive.filter {
+                it.includeVersionByRegex("one-jar", "one-jar-boot", "0.97|0.98")
             }
         }
 
         oneJarStable = project.configurations.create("onejar").apply {
-            isVisible = false
             isTransitive = false
             description = "The oneJar boot stable configuration for this project"
             defaultDependencies {
@@ -95,7 +86,6 @@ class GradleOneJarPlugin : Plugin<Project> {
         }
 
         oneJarRC = project.configurations.create("onejarRC").apply {
-            isVisible = false
             isTransitive = false
             description = "The oneJar boot RC configuration for this project"
             defaultDependencies {
@@ -178,4 +168,3 @@ class GradleOneJarPlugin : Plugin<Project> {
     }
 }
 
-private operator fun GradleVersion.compareTo(version: String): Int = this.compareTo(GradleVersion.version(version))

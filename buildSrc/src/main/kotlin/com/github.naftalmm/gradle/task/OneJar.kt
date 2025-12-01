@@ -10,7 +10,7 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.jvm.tasks.Jar
 
-open class OneJar : Jar() {
+abstract class OneJar : Jar() {
     @InputFiles
     val depLibs: ConfigurableFileCollection = project.objects.fileCollection()
 
