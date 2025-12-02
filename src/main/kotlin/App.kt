@@ -1,4 +1,3 @@
-import java.awt.Component
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
@@ -14,7 +13,7 @@ import javax.swing.JMenuItem
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
-import javax.swing.SwingConstants
+import javax.swing.SwingConstants.CENTER
 import javax.swing.TransferHandler
 import javax.swing.UIManager
 import java.awt.event.KeyEvent.VK_F as F
@@ -27,10 +26,10 @@ class App : JFrame(), Observer {
     private val workspace = JPanel().apply {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         add(JScrollPane(pdfsList).apply {
-            alignmentX = Component.LEFT_ALIGNMENT
+            alignmentX = LEFT_ALIGNMENT
         })
         add(JButton("Save as PDF...").apply {
-            alignmentX = Component.LEFT_ALIGNMENT
+            alignmentX = LEFT_ALIGNMENT
             preferredSize *= 2
             addActionListener {
                 val fc = JPDFFileChooser().apply { currentDirectory = fcCurrentDirectory }
@@ -42,8 +41,8 @@ class App : JFrame(), Observer {
         })
     }
     private val dropPDFsLabel = JLabel("Drop PDFs here").apply {
-        horizontalAlignment = SwingConstants.CENTER
-        verticalAlignment = SwingConstants.CENTER
+        horizontalAlignment = CENTER
+        verticalAlignment = CENTER
     }
     private var fcCurrentDirectory: File? = null
     private val cardLayout = JPanelCardLayout().apply {
