@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.2.0"
+    kotlin("jvm") version "2.3.0"
     `java-gradle-plugin`
 }
 
@@ -11,7 +11,7 @@ kotlin {
     jvmToolchain(11)
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = "2.2"
+            languageVersion = "2.3"
             progressiveMode = true
         }
     }

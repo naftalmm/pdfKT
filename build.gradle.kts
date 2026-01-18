@@ -1,8 +1,8 @@
 plugins {
-    kotlin("jvm") version "2.2.0"
-    id("edu.sc.seis.launch4j") version "3.0.6"
+    kotlin("jvm") version "2.3.0"
+    id("edu.sc.seis.launch4j") version "4.0.0"
     id("my-gradle-one-jar")
-    id("com.github.ben-manes.versions") version "0.52.0"
+    id("com.github.ben-manes.versions") version "0.53.0"
 //    id("com.github.onslip.gradle-one-jar") version "1.0.5"
 }
 
@@ -15,21 +15,21 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("com.github.pcorless.icepdf:icepdf-core:7.3.0")
-    val iTextPdfVersion = "9.2.0"
+    implementation("com.github.pcorless.icepdf:icepdf-core:7.3.1")
+    val iTextPdfVersion = "9.5.0"
     implementation("com.itextpdf:kernel:$iTextPdfVersion")
     testImplementation("com.itextpdf:layout:$iTextPdfVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.14.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-swing-junit:3.17.1")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.1")
 }
 
 kotlin {
     jvmToolchain(11)
     sourceSets.all {
         languageSettings.apply {
-            languageVersion = "2.2"
+            languageVersion = "2.3"
             progressiveMode = true
         }
     }
